@@ -1,5 +1,6 @@
 package com.fuzs.proplacer;
 
+import com.fuzs.proplacer.client.FastPlacementHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -16,13 +17,13 @@ public class ProPlacer {
     public static final Logger LOGGER = LogManager.getLogger(ProPlacer.NAME);
 
     public ProPlacer() {
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
+
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);
     }
 
-    private void clientSetup(final FMLClientSetupEvent evt) {
+    private void onClientSetup(final FMLClientSetupEvent evt) {
 
         MinecraftForge.EVENT_BUS.register(new FastPlacementHandler());
-        MinecraftForge.EVENT_BUS.register(new FrontPlacementHandler());
     }
 
 }
