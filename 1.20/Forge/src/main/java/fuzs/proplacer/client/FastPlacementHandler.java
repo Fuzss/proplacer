@@ -1,5 +1,6 @@
 package fuzs.proplacer.client;
 
+import fuzs.proplacer.client.util.BlockClippingUtil;
 import fuzs.proplacer.mixin.client.accessor.MinecraftAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 public class FastPlacementHandler {
-    private final Minecraft mc = Minecraft.getInstance();
+    private final Minecraft minecraft = Minecraft.getInstance();
     private int rightClickDelay;
     @Nullable
     private HitResult hitResult;
@@ -39,7 +40,7 @@ public class FastPlacementHandler {
     public void onRightClick(PlayerInteractEvent.RightClickBlock evt) {
 
         if (evt.getLevel().isClientSide && evt.getFace() != null &&
-                this.mc.player.getItemInHand(evt.getHand()).getItem() instanceof BlockItem) {
+                this.minecraft.player.getItemInHand(evt.getHand()).getItem() instanceof BlockItem) {
 
             if (this.lastPos == BlockPos.ZERO || !evt.getLevel().isEmptyBlock(this.lastPos)) {
 
@@ -65,7 +66,7 @@ public class FastPlacementHandler {
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent evt) {
         if (evt.phase == TickEvent.Phase.END) {
-            if (!this.mc.options.keyUse.isDown()) {
+            if (!this.minecraft.options.keyUse.isDown()) {
                 this.reset();
             } else {
                 if (this.rightClickDelay > 0) {
@@ -97,16 +98,16 @@ public class FastPlacementHandler {
 
         if (this.playerPosition == Vec3.ZERO) {
 
-            this.playerPosition = this.mc.player.position();
+            this.playerPosition = this.minecraft.player.position();
         }
 
-        if (!this.mc.player.position().closerThan(this.playerPosition, 0.5)) {
+        if (!this.minecraft.player.position().closerThan(this.playerPosition, 0.5)) {
             // reduce timer when further away so block placing speed can keep up with player movement
             this.rightClickDelay -= 4;
         } else if (this.rightClickDelay < 7 && this.hitResult.getType() == HitResult.Type.BLOCK &&
-                this.mc.hitResult.getType() == HitResult.Type.BLOCK) {
+                this.minecraft.hitResult.getType() == HitResult.Type.BLOCK) {
 
-            BlockHitResult currentHitResult = (BlockHitResult) this.mc.hitResult;
+            BlockHitResult currentHitResult = (BlockHitResult) this.minecraft.hitResult;
             BlockHitResult lastGoodHitResult = (BlockHitResult) this.hitResult;
 
             if (!lastGoodHitResult.getBlockPos().equals(currentHitResult.getBlockPos())) {
@@ -117,13 +118,13 @@ public class FastPlacementHandler {
         }
 
         this.rightClickDelay = Math.max(0, this.rightClickDelay);
-        ((MinecraftAccessor) this.mc).proplacer$setRightClickDelay(this.rightClickDelay);
-        this.hitResult = this.mc.hitResult;
+        ((MinecraftAccessor) this.minecraft).proplacer$setRightClickDelay(this.rightClickDelay);
+        this.hitResult = this.minecraft.hitResult;
     }
 
     private boolean hasRayTraceTarget() {
-        Entity entity = this.mc.getCameraEntity();
-        double pickRange = this.mc.gameMode.getPickRange();
+        Entity entity = this.minecraft.getCameraEntity();
+        double pickRange = this.minecraft.gameMode.getPickRange();
         Vec3 startVec = entity.getEyePosition(0.0F);
         Vec3 viewVector = entity.getViewVector(0.0F);
         Vec3 endVec = startVec.add(viewVector.x() * pickRange, viewVector.y() * pickRange, viewVector.z() * pickRange);
@@ -133,17 +134,18 @@ public class FastPlacementHandler {
                 ClipContext.Fluid.NONE,
                 entity
         );
-        return AirRayTracer.rayTraceBlocks(entity.level(), clipContext, this.lastPos.relative(this.lastDirection));
+
+        return BlockClippingUtil.isBlockPositionInLine(entity.level(), clipContext, this.lastPos.relative(this.lastDirection));
     }
 
     private void rightClickMouse() {
 
-        ((MinecraftAccessor) this.mc).proplacer$setRightClickDelay(4);
+        ((MinecraftAccessor) this.minecraft).proplacer$setRightClickDelay(4);
         BlockPos pos = this.lastPos;
         Direction direction = this.lastDirection;
-        if (this.mc.hitResult.getType() == HitResult.Type.BLOCK) {
+        if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK) {
             BlockPos offsetPos = pos.relative(direction);
-            BlockPos posRayTrace = ((BlockHitResult) this.mc.hitResult).getBlockPos();
+            BlockPos posRayTrace = ((BlockHitResult) this.minecraft.hitResult).getBlockPos();
             direction = getDirectionToBlock(posRayTrace, offsetPos).orElse(direction);
             pos = offsetPos.relative(direction.getOpposite());
         }
@@ -154,13 +156,13 @@ public class FastPlacementHandler {
                 pos.getZ() + Mth.frac(hitLocation.z())
         );
         BlockHitResult hitResult = new BlockHitResult(newHitLocation, direction, pos, false);
-        ItemStack itemInHand = this.mc.player.getItemInHand(this.lastHand);
+        ItemStack itemInHand = this.minecraft.player.getItemInHand(this.lastHand);
         int itemCount = itemInHand.getCount();
-        InteractionResult interactionResult = this.mc.gameMode.useItemOn(this.mc.player, this.lastHand, hitResult);
+        InteractionResult interactionResult = this.minecraft.gameMode.useItemOn(this.minecraft.player, this.lastHand, hitResult);
         if (interactionResult.shouldSwing()) {
-            this.mc.player.swing(this.lastHand);
-            if (!itemInHand.isEmpty() && (itemInHand.getCount() != itemCount || this.mc.gameMode.hasInfiniteItems())) {
-                this.mc.gameRenderer.itemInHandRenderer.itemUsed(this.lastHand);
+            this.minecraft.player.swing(this.lastHand);
+            if (!itemInHand.isEmpty() && (itemInHand.getCount() != itemCount || this.minecraft.gameMode.hasInfiniteItems())) {
+                this.minecraft.gameRenderer.itemInHandRenderer.itemUsed(this.lastHand);
             }
         }
     }
