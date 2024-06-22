@@ -1,5 +1,5 @@
 # Pro Placer
 
-A Minecraft mod. Downloads can be found on CurseForge.
+A Minecraft mod. Downloads can be found on [CurseForge](https://www.curseforge.com/members/fuzs_/projects) and [Modrinth](https://modrinth.com/user/Fuzs).
 
-![](https://i.imgur.com/QSBZztB.png)
+![](https://raw.githubusercontent.com/Fuzss/modresources/main/pages/data/proplacer/banner.png)
