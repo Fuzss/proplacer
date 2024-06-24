@@ -38,28 +38,26 @@ public class BlockClippingHelper {
                 context.getTo(),
                 context,
                 (ClipContext traverseContext, BlockPos traversePos) -> {
-                    BlockState blockState = blockGetter.getBlockState(traversePos);
-                    FluidState fluidState = blockGetter.getFluidState(traversePos);
-                    Vec3 from = traverseContext.getFrom();
-                    Vec3 to = traverseContext.getTo();
-                    VoxelShape blockShape = traverseContext.getBlockShape(blockState, blockGetter, traversePos);
-                    BlockHitResult blockHitResult = blockGetter.clipWithInteractionOverride(from,
-                            to,
-                            traversePos,
-                            blockShape,
-                            blockState
-                    );
-                    if (blockHitResult != null) {
-                        return null;
+                    if (traversePos.equals(targetPos)) {
+                        return Boolean.TRUE;
                     } else {
-                        VoxelShape fluidShape = traverseContext.getFluidShape(fluidState, blockGetter, traversePos);
-                        BlockHitResult fluidHitResult = fluidShape.clip(from, to, traversePos);
-                        if (fluidHitResult != null) {
-                            return null;
-                        } else if (traversePos.equals(targetPos)) {
-                            return Boolean.TRUE;
+                        BlockState blockState = blockGetter.getBlockState(traversePos);
+                        FluidState fluidState = blockGetter.getFluidState(traversePos);
+                        Vec3 from = traverseContext.getFrom();
+                        Vec3 to = traverseContext.getTo();
+                        VoxelShape blockShape = traverseContext.getBlockShape(blockState, blockGetter, traversePos);
+                        BlockHitResult blockHitResult = blockGetter.clipWithInteractionOverride(from,
+                                to,
+                                traversePos,
+                                blockShape,
+                                blockState
+                        );
+                        if (blockHitResult != null) {
+                            return Boolean.FALSE;
                         } else {
-                            return null;
+                            VoxelShape fluidShape = traverseContext.getFluidShape(fluidState, blockGetter, traversePos);
+                            BlockHitResult fluidHitResult = fluidShape.clip(from, to, traversePos);
+                            return fluidHitResult != null ? Boolean.FALSE : null;
                         }
                     }
                 },

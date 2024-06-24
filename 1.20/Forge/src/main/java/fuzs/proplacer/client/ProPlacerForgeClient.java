@@ -1,9 +1,10 @@
 package fuzs.proplacer.client;
 
 import fuzs.proplacer.ProPlacer;
+import fuzs.proplacer.data.client.ModLanguageProvider;
 import fuzs.puzzleslib.api.client.core.v1.ClientModConstructor;
+import fuzs.puzzleslib.api.data.v2.core.DataProviderHelper;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
@@ -14,6 +15,6 @@ public class ProPlacerForgeClient {
     @SubscribeEvent
     public static void onConstructMod(final FMLConstructModEvent evt) {
         ClientModConstructor.construct(ProPlacer.MOD_ID, ProPlacerClient::new);
-        MinecraftForge.EVENT_BUS.register(new FastPlacementHandler());
+        DataProviderHelper.registerDataProviders(ProPlacer.MOD_ID, ModLanguageProvider::new);
     }
 }
