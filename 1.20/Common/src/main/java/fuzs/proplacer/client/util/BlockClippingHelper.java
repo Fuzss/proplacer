@@ -1,6 +1,7 @@
 package fuzs.proplacer.client.util;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipBlockStateContext;
 import net.minecraft.world.level.ClipContext;
@@ -10,7 +11,21 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class BlockClippingUtil {
+public class BlockClippingHelper {
+
+    public static boolean isBlockPositionInLine(Entity entity, double pickRange, BlockPos targetPos) {
+        Vec3 startVector = entity.getEyePosition(0.0F);
+        Vec3 viewVector = entity.getViewVector(0.0F);
+        Vec3 endVector = startVector.add(viewVector.x() * pickRange, viewVector.y() * pickRange, viewVector.z() * pickRange);
+        ClipContext clipContext = new ClipContext(startVector,
+                endVector,
+                ClipContext.Block.OUTLINE,
+                ClipContext.Fluid.NONE,
+                entity
+        );
+
+        return isBlockPositionInLine(entity.level(), clipContext, targetPos);
+    }
 
     /**
      * Checks if a given block position is in line for the given context (i.e. it is somewhere hit by the provided
@@ -41,8 +56,10 @@ public class BlockClippingUtil {
                         BlockHitResult fluidHitResult = fluidShape.clip(from, to, traversePos);
                         if (fluidHitResult != null) {
                             return null;
+                        } else if (traversePos.equals(targetPos)) {
+                            return Boolean.TRUE;
                         } else {
-                            return traversePos.equals(targetPos) ? Boolean.TRUE : null;
+                            return null;
                         }
                     }
                 },

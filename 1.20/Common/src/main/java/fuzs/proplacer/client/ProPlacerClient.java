@@ -19,10 +19,10 @@ public class ProPlacerClient implements ClientModConstructor {
 
     @Override
     public void onConstructMod() {
-        registerHandlers();
+//        registerHandlers();
     }
 
-    private static void registerHandlers() {
+    private static void registerEventHandlers() {
         InteractionInputEvents.USE.register((Minecraft minecraft, LocalPlayer player, InteractionHand interactionHand, HitResult hitResult) -> {
             if (lastHitResult != null && hitResult.getType() == HitResult.Type.MISS) {
                 minecraft.hitResult = lastHitResult;
