@@ -27,6 +27,8 @@ public class FastPlacementHandler {
     private Direction direction;
     @Nullable
     private Vec3 hitLocation;
+    @Nullable
+    private InteractionHand interactionHand;
 
     public EventResultHolder<InteractionResult> onUseBlock(Player player, Level level, InteractionHand interactionHand, BlockHitResult hitResult) {
 
@@ -34,11 +36,13 @@ public class FastPlacementHandler {
 
             // using block place context allows for supporting e.g. placing slabs inside other slabs
             // this logic seems to work ideal for our use-case, with Block::canBeReplaced called internally
-            this.newBlockPos = new BlockPlaceContext(player,
+            BlockPlaceContext context = new BlockPlaceContext(player,
                     interactionHand,
                     player.getItemInHand(interactionHand),
                     hitResult
-            ).getClickedPos();
+            );
+            this.newBlockPos = context.getClickedPos();
+            this.interactionHand = interactionHand;
         }
 
         return EventResultHolder.pass();
@@ -47,15 +51,15 @@ public class FastPlacementHandler {
     public void onStartClientTick(Minecraft minecraft) {
 
         // needs to run at the beginning of client tick to avoid double placing in a single tick when vanilla has just placed a block
-        if (!KeyMappingHandler.isIsFastPlacementActive() || !minecraft.options.keyUse.isDown()) {
+        if (!KeyMappingHandler.isFastPlacementActive() ||
+                minecraft.player != null && minecraft.player.onGround() && minecraft.player.isShiftKeyDown() ||
+                !minecraft.options.keyUse.isDown()) {
 
-            this.blockPos = null;
-            this.direction = null;
-            this.hitLocation = null;
+            this.clear();
         } else {
 
             this.tickNewPosition(minecraft.level);
-            if (this.hitLocation == null || this.direction == null) {
+            if (!this.isFastPlacing()) {
 
                 // store hit location once when locking placement direction, so that it is easier to place e.g. stairs consistently
                 this.hitLocation = minecraft.hitResult.getLocation();
@@ -71,11 +75,26 @@ public class FastPlacementHandler {
                             this.blockPos.getY() + Mth.frac(this.hitLocation.y()),
                             this.blockPos.getZ() + Mth.frac(this.hitLocation.z())
                     );
-                    minecraft.hitResult = new BlockHitResult(hitLocation, this.direction, this.blockPos, false);
-                    ((MinecraftAccessor) minecraft).proplacer$callStartUseItem();
+                    BlockHitResult hitResult = new BlockHitResult(hitLocation, this.direction, this.blockPos, false);
+                    ReachAroundPlacementHandler.startUseItemWithSecondaryUseActive(minecraft,
+                            minecraft.player,
+                            this.interactionHand,
+                            hitResult
+                    );
                 }
             }
         }
+    }
+
+    public boolean isFastPlacing() {
+        return this.hitLocation != null && this.direction != null;
+    }
+
+    public void clear() {
+        this.blockPos = null;
+        this.direction = null;
+        this.hitLocation = null;
+        this.interactionHand = null;
     }
 
     private void tickNewPosition(Level level) {

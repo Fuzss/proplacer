@@ -37,7 +37,7 @@ public class KeyMappingHandler {
         isFastPlacementActive = ProPlacer.CONFIG.get(ClientConfig.class).defaultFastPlacement;
     }
 
-    public static boolean isIsFastPlacementActive() {
-        return isFastPlacementActive;
+    public static boolean isFastPlacementActive() {
+        return isFastPlacementActive && ProPlacer.CONFIG.get(ClientConfig.class).allowFastPlacement;
     }
 }
