@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog].
 
+## [v8.0.1-1.20.1] - 2024-06-26
+### Changed
+- Mark mod as client-only
+- Fast block placement is no longer disabled while sneaking, use the dedicated key toggle instead
+
 ## [v8.0.0-1.20.1] - 2024-06-26
 - Fully rewritten for Minecraft 1.20.1
 ### Added

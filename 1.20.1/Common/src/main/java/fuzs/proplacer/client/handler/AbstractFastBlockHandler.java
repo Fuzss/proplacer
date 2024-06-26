@@ -19,9 +19,7 @@ public abstract class AbstractFastBlockHandler {
     public final void onStartClientTick(Minecraft minecraft) {
 
         // needs to run at the beginning of client tick to avoid double placing in a single tick when vanilla has just placed a block
-        if (!KeyBindingHandler.isFastPlacementActive() ||
-                minecraft.player != null && minecraft.player.onGround() && minecraft.player.isShiftKeyDown() ||
-                !this.getKeyMapping(minecraft.options).isDown()) {
+        if (!KeyBindingHandler.isFastPlacementActive() || !this.getKeyMapping(minecraft.options).isDown()) {
 
             this.clear();
         } else {

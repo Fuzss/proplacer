@@ -12,8 +12,8 @@ public class ModLanguageProvider extends AbstractLanguageProvider {
     }
 
     @Override
-    protected void addTranslations(TranslationBuilder builder) {
-        builder.add(KeyBindingHandler.KEY_CATEGORY, ProPlacer.MOD_NAME);
+    public void addTranslations(TranslationBuilder builder) {
+        builder.addKeyCategory(ProPlacer.MOD_ID, ProPlacer.MOD_NAME);
         builder.add(KeyBindingHandler.KEY_TOGGLE_FAST_PLACEMENT, "Toggle Fast Block Placement");
         builder.add(KeyBindingHandler.KEY_FAST_PLACEMENT_MESSAGE, "Fast Block Placement: %s");
     }

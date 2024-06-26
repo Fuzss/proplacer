@@ -1,8 +1,8 @@
 package fuzs.proplacer.client.handler;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import fuzs.proplacer.ProPlacer;
 import fuzs.proplacer.config.ClientConfig;
+import fuzs.puzzleslib.api.client.key.v1.KeyMappingHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -10,11 +10,8 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
 public class KeyBindingHandler {
-    public static final String KEY_CATEGORY = "key.categories." + ProPlacer.MOD_ID;
-    public static final KeyMapping KEY_TOGGLE_FAST_PLACEMENT = new KeyMapping("key.fast_placement",
-            InputConstants.UNKNOWN.getValue(),
-            KEY_CATEGORY
-    );
+    public static final KeyMapping KEY_TOGGLE_FAST_PLACEMENT = KeyMappingHelper.registerUnboundKeyMapping(ProPlacer.id(
+            "fast_placement"));
     public static final String KEY_FAST_PLACEMENT_MESSAGE = "gui.fast_placement";
     private static final Component COMPONENT_ON = Component.empty()
             .append(CommonComponents.OPTION_ON)

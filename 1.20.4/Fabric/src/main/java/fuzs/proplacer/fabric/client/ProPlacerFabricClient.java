@@ -1,6 +1,7 @@
-package fuzs.proplacer.client;
+package fuzs.proplacer.fabric.client;
 
 import fuzs.proplacer.ProPlacer;
+import fuzs.proplacer.client.ProPlacerClient;
 import fuzs.puzzleslib.api.client.core.v1.ClientModConstructor;
 import net.fabricmc.api.ClientModInitializer;
 
