@@ -29,8 +29,7 @@ public class KeyBindingHandler {
 
         while (KeyBindingHandler.KEY_TOGGLE_FAST_PLACEMENT.consumeClick()) {
 
-            isFastPlacementActive =
-                    !isFastPlacementActive && ProPlacer.CONFIG.get(ClientConfig.class).allowFastPlacement;
+            isFastPlacementActive = !isFastPlacementActive;
             minecraft.gui.setOverlayMessage(Component.translatable(KEY_FAST_PLACEMENT_MESSAGE,
                     isFastPlacementActive ? COMPONENT_ON : COMPONENT_OFF
             ), false);
@@ -39,11 +38,10 @@ public class KeyBindingHandler {
 
     public static void onLoadComplete() {
         // set this only once during launch, not on every config reload
-        isFastPlacementActive = ProPlacer.CONFIG.get(ClientConfig.class).allowFastPlacement &&
-                ProPlacer.CONFIG.get(ClientConfig.class).defaultFastPlacement;
+        isFastPlacementActive = ProPlacer.CONFIG.get(ClientConfig.class).allowFastPlacement;
     }
 
     public static boolean isFastPlacementActive() {
-        return isFastPlacementActive && ProPlacer.CONFIG.get(ClientConfig.class).allowFastPlacement;
+        return isFastPlacementActive;
     }
 }
