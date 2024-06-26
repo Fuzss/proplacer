@@ -26,7 +26,7 @@ public class ReachAroundPlacementHandler {
         if (!ProPlacer.CONFIG.get(ClientConfig.class).allowReachAroundPlacement) return EventResult.PASS;
 
         // we need to guard this as the Fabric event fires from MultiPlayerGameMode::useItemOn which we call later
-        if (!isProcessingInteraction && !FastPlacementHandler.INSTANCE.isFastPlacing()) {
+        if (!isProcessingInteraction && !FastPlacementHandler.INSTANCE.isActive()) {
 
             BlockHitResult blockHitResult = getReachAroundHitResult(minecraft, player, hitResult);
             if (blockHitResult != null) {

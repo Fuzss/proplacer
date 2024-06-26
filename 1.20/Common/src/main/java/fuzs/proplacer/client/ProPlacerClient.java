@@ -1,7 +1,8 @@
 package fuzs.proplacer.client;
 
+import fuzs.proplacer.client.handler.FastBreakingHandler;
 import fuzs.proplacer.client.handler.FastPlacementHandler;
-import fuzs.proplacer.client.handler.KeyMappingHandler;
+import fuzs.proplacer.client.handler.KeyBindingHandler;
 import fuzs.proplacer.client.handler.ReachAroundPlacementHandler;
 import fuzs.puzzleslib.api.client.core.v1.ClientModConstructor;
 import fuzs.puzzleslib.api.client.core.v1.context.KeyMappingsContext;
@@ -22,12 +23,16 @@ public class ProPlacerClient implements ClientModConstructor {
         PlayerInteractEvents.USE_BLOCK.register(FastPlacementHandler.INSTANCE::onUseBlock);
         InteractionInputEvents.USE.register(ReachAroundPlacementHandler::onUseInteraction);
         ClientTickEvents.START.register(FastPlacementHandler.INSTANCE::onStartClientTick);
-        ClientTickEvents.START.register(KeyMappingHandler::onStartClientTick);
-        LoadCompleteCallback.EVENT.register(KeyMappingHandler::onLoadComplete);
+        ClientTickEvents.START.register(FastBreakingHandler.INSTANCE::onStartClientTick);
+        PlayerInteractEvents.ATTACK_BLOCK_V2.register(FastBreakingHandler.INSTANCE::onAttackBlock);
+        ClientTickEvents.START.register(KeyBindingHandler::onStartClientTick);
+        LoadCompleteCallback.EVENT.register(KeyBindingHandler::onLoadComplete);
     }
 
     @Override
     public void onRegisterKeyMappings(KeyMappingsContext context) {
-        context.registerKeyMapping(KeyMappingHandler.KEY_TOGGLE_FAST_PLACEMENT, KeyMappingActivationHelper.KeyActivationContext.GAME);
+        context.registerKeyMapping(KeyBindingHandler.KEY_TOGGLE_FAST_PLACEMENT,
+                KeyMappingActivationHelper.KeyActivationContext.GAME
+        );
     }
 }

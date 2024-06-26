@@ -8,7 +8,8 @@
   "mixins": [
   ],
   "client": [
-    "client.accessor.MinecraftAccessor"
+    "client.accessor.MinecraftAccessor",
+    "client.accessor.MultiPlayerGameModeAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
