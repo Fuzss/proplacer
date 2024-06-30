@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog].
 
+## [v8.0.2-1.20.1] - 2024-06-30
+### Fixed
+- Fix unable to use items while looking down
+- Fix unable to place bottom slabs via the reach-around mechanic
+
 ## [v8.0.1-1.20.1] - 2024-06-26
 ### Changed
 - Mark mod as client-only

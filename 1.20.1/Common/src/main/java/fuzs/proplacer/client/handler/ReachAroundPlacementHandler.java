@@ -10,12 +10,15 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 public class ReachAroundPlacementHandler {
@@ -32,11 +35,18 @@ public class ReachAroundPlacementHandler {
             if (blockHitResult != null) {
 
                 isProcessingInteraction = true;
-                startUseItemWithSecondaryUseActive(minecraft, player, interactionHand, blockHitResult);
+                InteractionResult interactionResult = startUseItemWithSecondaryUseActive(minecraft,
+                        player,
+                        interactionHand,
+                        blockHitResult
+                );
                 isProcessingInteraction = false;
                 FastPlacementHandler.INSTANCE.clear();
 
-                return EventResult.INTERRUPT;
+                if (interactionResult.consumesAction()) {
+
+                    return EventResult.INTERRUPT;
+                }
             }
         }
 
@@ -59,8 +69,15 @@ public class ReachAroundPlacementHandler {
 
                     Vec3i directionNormal = direction.getNormal();
                     Vec3 hitLocation = new Vec3(directionNormal.getX(), directionNormal.getY(), directionNormal.getZ());
-                    // Bedrock Edition places slabs and stairs upside down, by increasing y we achieve the same behavior
-                    hitLocation = hitLocation.scale(0.5).add(0.5, 0.75, 0.5).add(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+                    // Bedrock Edition places slabs and stairs upside down, by using max for y we achieve the same behavior
+                    VoxelShape voxelShape = minecraft.level.getBlockState(blockPos)
+                            .getCollisionShape(minecraft.level, blockPos, CollisionContext.of(player));
+                    double y = voxelShape.max(Direction.Axis.Y);
+                    // will be infinite for empty shapes
+                    if (Double.isInfinite(y)) {
+                        y = Math.abs((Mth.frac(player.position().y()) - 0.5) * 2);
+                    }
+                    hitLocation = hitLocation.scale(0.5).add(0.5, y, 0.5).add(blockPos.getX(), blockPos.getY(), blockPos.getZ());
                     return new BlockHitResult(hitLocation, direction, blockPos, false);
                 }
             }
@@ -69,7 +86,7 @@ public class ReachAroundPlacementHandler {
         return null;
     }
 
-    public static void startUseItemWithSecondaryUseActive(Minecraft minecraft, LocalPlayer player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+    public static InteractionResult startUseItemWithSecondaryUseActive(Minecraft minecraft, LocalPlayer player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
 
         // allow blocks that have an interaction to be placed using the fast placement mechanic, e.g. fence gates and chests
         boolean shiftKeyDown =
@@ -81,7 +98,7 @@ public class ReachAroundPlacementHandler {
             ));
         }
 
-        startUseItem(minecraft, player, interactionHand, blockHitResult);
+        InteractionResult interactionResult = startUseItem(minecraft, player, interactionHand, blockHitResult);
 
         if (!shiftKeyDown) {
             minecraft.player.input.shiftKeyDown = false;
@@ -89,9 +106,11 @@ public class ReachAroundPlacementHandler {
                     ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY
             ));
         }
+
+        return interactionResult;
     }
 
-    public static void startUseItem(Minecraft minecraft, LocalPlayer player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+    public static InteractionResult startUseItem(Minecraft minecraft, LocalPlayer player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
 
         ItemStack itemInHand = player.getItemInHand(interactionHand);
         int itemCount = itemInHand.getCount();
@@ -104,5 +123,7 @@ public class ReachAroundPlacementHandler {
                 minecraft.gameRenderer.itemInHandRenderer.itemUsed(interactionHand);
             }
         }
+
+        return interactionResult;
     }
 }
