@@ -1,5 +1,7 @@
 package fuzs.proplacer.client.handler;
 
+import fuzs.proplacer.ProPlacer;
+import fuzs.proplacer.config.ClientConfig;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -61,7 +63,7 @@ public abstract class AbstractFastBlockHandler {
         if (this.newBlockPos != null) {
 
             // prevent setting block position to the next one when the last breaking attempt was unsuccessful
-            if (this.requireEmptyBlock() == level.isEmptyBlock(this.newBlockPos)) {
+            if (this.requireEmptyBlock() == level.isEmptyBlock(this.newBlockPos) && !ProPlacer.CONFIG.get(ClientConfig.class).normalPlacement.contains(level.getBlockState(this.newBlockPos).getBlock())) {
 
                 if (this.blockPos != null && this.blockPos.distManhattan(this.newBlockPos) == 1) {
 

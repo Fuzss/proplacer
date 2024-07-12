@@ -2,6 +2,13 @@ package fuzs.proplacer.config;
 
 import fuzs.puzzleslib.api.config.v3.Config;
 import fuzs.puzzleslib.api.config.v3.ConfigCore;
+import fuzs.puzzleslib.api.config.v3.serialization.ConfigDataSet;
+import fuzs.puzzleslib.api.config.v3.serialization.KeyedValueProvider;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+
+import java.util.List;
 
 public class ClientConfig implements ConfigCore {
     @Config(
@@ -16,4 +23,18 @@ public class ClientConfig implements ConfigCore {
     public boolean allowReachAroundPlacement = true;
     @Config(description = "Treat sneaking as active while placing blocks via the fast placement mechanic or reach-around. Allows block placement to work with interactable blocks such as chests and fence gates.")
     public boolean bypassUseBlock = false;
+    @Config(name = "normal_placement_blocks",
+            description = {
+                    "Blocks that are excluded from the fast placement mechanic.",
+                    ConfigDataSet.CONFIG_DESCRIPTION
+            }
+    )
+    List<String> normalPlacementRaw = KeyedValueProvider.toString(Registries.BLOCK, Blocks.SCAFFOLDING);
+
+    public ConfigDataSet<Block> normalPlacement;
+
+    @Override
+    public void afterConfigReload() {
+        this.normalPlacement = ConfigDataSet.from(Registries.BLOCK, this.normalPlacementRaw);
+    }
 }

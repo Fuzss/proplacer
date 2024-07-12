@@ -2,10 +2,11 @@ package fuzs.proplacer.client.handler;
 
 import fuzs.proplacer.ProPlacer;
 import fuzs.proplacer.config.ClientConfig;
+import fuzs.puzzleslib.api.client.core.v1.context.KeyMappingsContext;
+import fuzs.puzzleslib.api.client.key.v1.KeyActivationHandler;
 import fuzs.puzzleslib.api.client.key.v1.KeyMappingHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
@@ -22,15 +23,15 @@ public class KeyBindingHandler {
 
     private static boolean isFastPlacementActive;
 
-    public static void onStartClientTick(Minecraft minecraft) {
-
-        while (KeyBindingHandler.KEY_TOGGLE_FAST_PLACEMENT.consumeClick()) {
-
-            isFastPlacementActive = !isFastPlacementActive;
-            minecraft.gui.setOverlayMessage(Component.translatable(KEY_FAST_PLACEMENT_MESSAGE,
-                    isFastPlacementActive ? COMPONENT_ON : COMPONENT_OFF
-            ), false);
-        }
+    public static void onRegisterKeyMappings(KeyMappingsContext context) {
+        context.registerKeyMapping(KeyBindingHandler.KEY_TOGGLE_FAST_PLACEMENT,
+                KeyActivationHandler.forGame(minecraft -> {
+                    isFastPlacementActive = !isFastPlacementActive;
+                    minecraft.gui.setOverlayMessage(Component.translatable(KEY_FAST_PLACEMENT_MESSAGE,
+                            isFastPlacementActive ? COMPONENT_ON : COMPONENT_OFF
+                    ), false);
+                })
+        );
     }
 
     public static void onLoadComplete() {

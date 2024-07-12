@@ -65,7 +65,7 @@ public class ReachAroundPlacementHandler {
 
                 Direction direction = player.getDirection();
                 BlockPos targetPos = blockPos.relative(direction);
-                if (BlockClippingHelper.isBlockPositionInLine(player, minecraft.gameMode.getPickRange(), targetPos)) {
+                if (BlockClippingHelper.isBlockPositionInLine(player, player.blockInteractionRange(), targetPos)) {
 
                     Vec3i directionNormal = direction.getNormal();
                     Vec3 hitLocation = new Vec3(directionNormal.getX(), directionNormal.getY(), directionNormal.getZ());

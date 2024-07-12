@@ -52,8 +52,7 @@ public class FastPlacementHandler extends AbstractFastBlockHandler {
     protected void tickWhenActive(Minecraft minecraft) {
         // always set this to default delay for blocking vanilla from running Minecraft::startUseItem
         ((MinecraftAccessor) minecraft).proplacer$setRightClickDelay(4);
-        float pickRange = minecraft.gameMode.getPickRange();
-        if (BlockClippingHelper.isBlockPositionInLine(minecraft.cameraEntity, pickRange, this.getTargetPosition())) {
+        if (BlockClippingHelper.isBlockPositionInLine(minecraft.cameraEntity, minecraft.player.blockInteractionRange(), this.getTargetPosition())) {
 
             Vec3 hitLocation = new Vec3(this.blockPos.getX() + Mth.frac(this.hitLocation.x()),
                     this.blockPos.getY() + Mth.frac(this.hitLocation.y()),
