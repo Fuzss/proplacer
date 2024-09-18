@@ -72,10 +72,14 @@ public class ReachAroundPlacementHandler {
                     // Bedrock Edition places slabs and stairs upside down, by using max for y we achieve the same behavior
                     VoxelShape voxelShape = minecraft.level.getBlockState(blockPos)
                             .getCollisionShape(minecraft.level, blockPos, CollisionContext.of(player));
-                    double y = voxelShape.max(Direction.Axis.Y);
+                    double maxY = voxelShape.max(Direction.Axis.Y);
+                    double minY = voxelShape.min(Direction.Axis.Y);
+                    double y;
                     // will be infinite for empty shapes
-                    if (Double.isInfinite(y)) {
+                    if (Double.isInfinite(minY) || Double.isInfinite(maxY)) {
                         y = Math.abs((Mth.frac(player.position().y()) - 0.5) * 2);
+                    } else {
+                        y = Mth.lerp(0.75, minY, maxY);
                     }
                     hitLocation = hitLocation.scale(0.5).add(0.5, y, 0.5).add(blockPos.getX(), blockPos.getY(), blockPos.getZ());
                     return new BlockHitResult(hitLocation, direction, blockPos, false);
