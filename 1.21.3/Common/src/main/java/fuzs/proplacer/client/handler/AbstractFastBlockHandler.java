@@ -70,7 +70,7 @@ public abstract class AbstractFastBlockHandler {
                     // find the direction we block are being placed in, must not match with the clicked block face,
                     // since the last placed block must not necessarily be what the next block is placed against
                     BlockPos diff = this.newBlockPos.subtract(this.blockPos);
-                    this.direction = Direction.getNearest(diff.getX(), diff.getY(), diff.getZ());
+                    this.direction = Direction.getNearest(diff.getX(), diff.getY(), diff.getZ(), null);
                 } else {
 
                     this.direction = null;

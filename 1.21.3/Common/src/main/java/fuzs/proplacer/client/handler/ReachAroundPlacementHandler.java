@@ -13,6 +13,7 @@ import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -67,7 +68,7 @@ public class ReachAroundPlacementHandler {
                 BlockPos targetPos = blockPos.relative(direction);
                 if (BlockClippingHelper.isBlockPositionInLine(player, player.blockInteractionRange(), targetPos)) {
 
-                    Vec3i directionNormal = direction.getNormal();
+                    Vec3i directionNormal = direction.getUnitVec3i();
                     Vec3 hitLocation = new Vec3(directionNormal.getX(), directionNormal.getY(), directionNormal.getZ());
                     // Bedrock Edition places slabs and stairs upside down, by using max for y we achieve the same behavior
                     VoxelShape voxelShape = minecraft.level.getBlockState(blockPos)
@@ -94,9 +95,10 @@ public class ReachAroundPlacementHandler {
 
         // allow blocks that have an interaction to be placed using the fast placement mechanic, e.g. fence gates and chests
         boolean shiftKeyDown =
-                minecraft.player.input.shiftKeyDown || !ProPlacer.CONFIG.get(ClientConfig.class).bypassUseBlock;
+                minecraft.player.input.keyPresses.shift() || !ProPlacer.CONFIG.get(ClientConfig.class).bypassUseBlock;
+        Input input = minecraft.player.input.keyPresses;
         if (!shiftKeyDown) {
-            minecraft.player.input.shiftKeyDown = true;
+            minecraft.player.input.keyPresses = new Input(input.forward(), input.backward(), input.left(), input.right(), input.jump(), true, input.sprint());
             minecraft.player.connection.send(new ServerboundPlayerCommandPacket(minecraft.player,
                     ServerboundPlayerCommandPacket.Action.PRESS_SHIFT_KEY
             ));
@@ -105,7 +107,7 @@ public class ReachAroundPlacementHandler {
         InteractionResult interactionResult = startUseItem(minecraft, player, interactionHand, blockHitResult);
 
         if (!shiftKeyDown) {
-            minecraft.player.input.shiftKeyDown = false;
+            minecraft.player.input.keyPresses = input;
             minecraft.player.connection.send(new ServerboundPlayerCommandPacket(minecraft.player,
                     ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY
             ));
@@ -120,7 +122,7 @@ public class ReachAroundPlacementHandler {
         int itemCount = itemInHand.getCount();
         InteractionResult interactionResult = minecraft.gameMode.useItemOn(player, interactionHand, blockHitResult);
 
-        if (interactionResult.shouldSwing()) {
+        if (interactionResult instanceof InteractionResult.Success success && success.swingSource() == InteractionResult.SwingSource.CLIENT) {
             player.swing(interactionHand);
             if (!itemInHand.isEmpty() &&
                     (itemInHand.getCount() != itemCount || minecraft.gameMode.hasInfiniteItems())) {
