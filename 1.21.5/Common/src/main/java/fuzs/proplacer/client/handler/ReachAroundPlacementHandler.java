@@ -39,8 +39,7 @@ public class ReachAroundPlacementHandler {
                 InteractionResult interactionResult = startUseItemWithSecondaryUseActive(minecraft,
                         player,
                         interactionHand,
-                        blockHitResult
-                );
+                        blockHitResult);
                 isProcessingInteraction = false;
                 FastPlacementHandler.INSTANCE.clear();
 
@@ -82,7 +81,9 @@ public class ReachAroundPlacementHandler {
                     } else {
                         y = Mth.lerp(0.75, minY, maxY);
                     }
-                    hitLocation = hitLocation.scale(0.5).add(0.5, y, 0.5).add(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+                    hitLocation = hitLocation.scale(0.5)
+                            .add(0.5, y, 0.5)
+                            .add(blockPos.getX(), blockPos.getY(), blockPos.getZ());
                     return new BlockHitResult(hitLocation, direction, blockPos, false);
                 }
             }
@@ -98,10 +99,15 @@ public class ReachAroundPlacementHandler {
                 minecraft.player.input.keyPresses.shift() || !ProPlacer.CONFIG.get(ClientConfig.class).bypassUseBlock;
         Input input = minecraft.player.input.keyPresses;
         if (!shiftKeyDown) {
-            minecraft.player.input.keyPresses = new Input(input.forward(), input.backward(), input.left(), input.right(), input.jump(), true, input.sprint());
+            minecraft.player.input.keyPresses = new Input(input.forward(),
+                    input.backward(),
+                    input.left(),
+                    input.right(),
+                    input.jump(),
+                    true,
+                    input.sprint());
             minecraft.player.connection.send(new ServerboundPlayerCommandPacket(minecraft.player,
-                    ServerboundPlayerCommandPacket.Action.PRESS_SHIFT_KEY
-            ));
+                    ServerboundPlayerCommandPacket.Action.PRESS_SHIFT_KEY));
         }
 
         InteractionResult interactionResult = startUseItem(minecraft, player, interactionHand, blockHitResult);
@@ -109,8 +115,7 @@ public class ReachAroundPlacementHandler {
         if (!shiftKeyDown) {
             minecraft.player.input.keyPresses = input;
             minecraft.player.connection.send(new ServerboundPlayerCommandPacket(minecraft.player,
-                    ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY
-            ));
+                    ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY));
         }
 
         return interactionResult;
@@ -122,10 +127,11 @@ public class ReachAroundPlacementHandler {
         int itemCount = itemInHand.getCount();
         InteractionResult interactionResult = minecraft.gameMode.useItemOn(player, interactionHand, blockHitResult);
 
-        if (interactionResult instanceof InteractionResult.Success success && success.swingSource() == InteractionResult.SwingSource.CLIENT) {
+        if (interactionResult instanceof InteractionResult.Success success &&
+                success.swingSource() == InteractionResult.SwingSource.CLIENT) {
             player.swing(interactionHand);
             if (!itemInHand.isEmpty() &&
-                    (itemInHand.getCount() != itemCount || minecraft.gameMode.hasInfiniteItems())) {
+                    (itemInHand.getCount() != itemCount || minecraft.player.hasInfiniteMaterials())) {
                 minecraft.gameRenderer.itemInHandRenderer.itemUsed(interactionHand);
             }
         }
