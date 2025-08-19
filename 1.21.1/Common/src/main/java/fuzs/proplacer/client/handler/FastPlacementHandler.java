@@ -44,8 +44,10 @@ public class FastPlacementHandler extends AbstractFastBlockHandler {
 
     @Override
     protected void tickNonActive(Minecraft minecraft) {
-        // store hit location once when locking placement direction, so that it is easier to place e.g. stairs consistently
-        this.hitLocation = minecraft.hitResult.getLocation();
+        if (minecraft.hitResult != null) {
+            // store hit location once when locking placement direction, so that it is easier to place e.g. stairs consistently
+            this.hitLocation = minecraft.hitResult.getLocation();
+        }
     }
 
     @Override

@@ -33,8 +33,8 @@ public class FastBreakingHandler extends AbstractFastBlockHandler {
         // we run at the beginning of the client tick, so this is not updated yet
         // there does not seem to exist a better hook after this is updated, but before keybindings are processed
         minecraft.gameRenderer.pick(1.0F);
-        if (minecraft.hitResult.getType() == HitResult.Type.BLOCK && ((BlockHitResult) minecraft.hitResult).getBlockPos().equals(
-                this.getTargetPosition())) {
+        if (minecraft.hitResult != null && minecraft.hitResult.getType() == HitResult.Type.BLOCK
+                && ((BlockHitResult) minecraft.hitResult).getBlockPos().equals(this.getTargetPosition())) {
 
             // ignore Minecraft::missTime, it does not apply for creative mode
             ((MultiPlayerGameModeAccessor) minecraft.gameMode).proplacer$setDestroyDelay(0);

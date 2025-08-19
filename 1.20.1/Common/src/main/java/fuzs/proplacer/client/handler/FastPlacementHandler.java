@@ -33,8 +33,7 @@ public class FastPlacementHandler extends AbstractFastBlockHandler {
             BlockPlaceContext context = new BlockPlaceContext(player,
                     interactionHand,
                     player.getItemInHand(interactionHand),
-                    hitResult
-            );
+                    hitResult);
             this.setNewBlockPos(context.getClickedPos());
             this.interactionHand = interactionHand;
         }
@@ -44,8 +43,10 @@ public class FastPlacementHandler extends AbstractFastBlockHandler {
 
     @Override
     protected void tickNonActive(Minecraft minecraft) {
-        // store hit location once when locking placement direction, so that it is easier to place e.g. stairs consistently
-        this.hitLocation = minecraft.hitResult.getLocation();
+        if (minecraft.hitResult != null) {
+            // store hit location once when locking placement direction, so that it is easier to place e.g. stairs consistently
+            this.hitLocation = minecraft.hitResult.getLocation();
+        }
     }
 
     @Override
@@ -57,14 +58,12 @@ public class FastPlacementHandler extends AbstractFastBlockHandler {
 
             Vec3 hitLocation = new Vec3(this.blockPos.getX() + Mth.frac(this.hitLocation.x()),
                     this.blockPos.getY() + Mth.frac(this.hitLocation.y()),
-                    this.blockPos.getZ() + Mth.frac(this.hitLocation.z())
-            );
+                    this.blockPos.getZ() + Mth.frac(this.hitLocation.z()));
             BlockHitResult hitResult = new BlockHitResult(hitLocation, this.direction, this.blockPos, false);
             ReachAroundPlacementHandler.startUseItemWithSecondaryUseActive(minecraft,
                     minecraft.player,
                     this.interactionHand,
-                    hitResult
-            );
+                    hitResult);
         }
     }
 

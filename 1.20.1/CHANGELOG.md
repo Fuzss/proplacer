@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog].
 
+## [v8.0.3-1.20.1] - 2025-08-19
+### Fixed
+- Fix crash with the [Alex's Mobs](https://www.curseforge.com/minecraft/mc-mods/alexs-mobs) mod
+
 ## [v8.0.2-1.20.1] - 2024-06-30
 ### Fixed
 - Fix unable to use items while looking down
