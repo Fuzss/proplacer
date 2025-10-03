@@ -26,10 +26,10 @@ public class FastPlacementHandler extends AbstractFastBlockHandler {
 
     public EventResultHolder<InteractionResult> onUseBlock(Player player, Level level, InteractionHand interactionHand, BlockHitResult hitResult) {
 
-        if (level.isClientSide) {
+        if (level.isClientSide()) {
 
             // using block place context allows for supporting e.g. placing slabs inside other slabs
-            // this logic seems to work ideal for our use-case, with Block::canBeReplaced called internally
+            // this logic seems to work ideally for our use-case, with Block::canBeReplaced called internally
             BlockPlaceContext context = new BlockPlaceContext(player,
                     interactionHand,
                     player.getItemInHand(interactionHand),
@@ -44,7 +44,7 @@ public class FastPlacementHandler extends AbstractFastBlockHandler {
     @Override
     protected void tickNonActive(Minecraft minecraft) {
         if (minecraft.hitResult != null) {
-            // store hit location once when locking placement direction, so that it is easier to place e.g. stairs consistently
+            // store hit location once when locking the placement direction, so that it is easier to place e.g. stairs consistently
             this.hitLocation = minecraft.hitResult.getLocation();
         }
     }
@@ -53,7 +53,7 @@ public class FastPlacementHandler extends AbstractFastBlockHandler {
     protected void tickWhenActive(Minecraft minecraft) {
         // always set this to default delay for blocking vanilla from running Minecraft::startUseItem
         ((MinecraftAccessor) minecraft).proplacer$setRightClickDelay(4);
-        if (BlockClippingHelper.isBlockPositionInLine(minecraft.cameraEntity,
+        if (BlockClippingHelper.isBlockPositionInLine(minecraft.getCameraEntity(),
                 minecraft.player.blockInteractionRange(),
                 this.getTargetPosition())) {
 

@@ -18,7 +18,7 @@ public class FastBreakingHandler extends AbstractFastBlockHandler {
 
     public EventResult onAttackBlock(Player player, Level level, InteractionHand interactionHand, BlockPos pos, Direction direction) {
 
-        if (level.isClientSide && player.getAbilities().instabuild) this.setNewBlockPos(pos);
+        if (level.isClientSide() && player.getAbilities().instabuild) this.setNewBlockPos(pos);
 
         return EventResult.PASS;
     }

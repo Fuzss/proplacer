@@ -1,5 +1,5 @@
 {
   "gui.fast_placement": "Fast Block Placement: %s",
-  "key.categories.proplacer": "Pro Placer",
+  "key.category.proplacer.main": "Pro Placer",
   "key.proplacer.fast_placement": "Toggle Fast Block Placement"
 }
