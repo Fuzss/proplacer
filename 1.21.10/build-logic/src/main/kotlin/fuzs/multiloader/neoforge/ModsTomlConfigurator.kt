@@ -6,19 +6,15 @@ import fuzs.multiloader.metadata.LinkProvider
 import fuzs.multiloader.metadata.ModLoaderProvider
 import fuzs.multiloader.neoforge.toml.NeoForgeModsTomlSpec
 import fuzs.multiloader.neoforge.toml.NeoForgeModsTomlTask
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import metadata
 import mod
 import org.gradle.api.Project
 import versionCatalog
-import java.io.File
 import kotlin.jvm.optionals.getOrNull
 
 fun Project.configureModsToml(task: NeoForgeModsTomlTask) {
-    task.outputFile.set(layout.buildDirectory.file("generated/resources/META-INF/neoforge.mods.toml"))
     val multiLoaderExtension = extensions.getByType(MultiLoaderExtension::class.java)
+    task.outputFile.set(layout.buildDirectory.file("generated/resources/META-INF/neoforge.mods.toml"))
 
     task.toml {
         val githubUrl = metadata.links
@@ -39,34 +35,16 @@ fun Project.configureModsToml(task: NeoForgeModsTomlTask) {
                 modUrl.set(it)
                 displayURL.set(it)
             }
+
             updateJSONURL.set("https://raw.githubusercontent.com/Fuzss/modresources/main/update/${mod.id}.json")
-            multiLoaderExtension.modFileMetadata.orNull?.enumExtensions?.orNull?.let { enumExtensions.set(it) }
+            multiLoaderExtension.modFile.orNull?.enumExtensions?.orNull?.let { enumExtensions.set(it) }
         }
 
-        addMixinConfigs(this)
+        mixin("${mod.id}.common.mixins.json")
+        mixin("${mod.id}.${name.lowercase()}.mixins.json")
         addDependencies(this)
-        multiLoaderExtension.modFileMetadata.orNull?.toml?.orNull?.execute(this)
+        multiLoaderExtension.modFile.orNull?.toml?.orNull?.execute(this)
     }
-}
-
-private fun Project.addMixinConfigs(toml: NeoForgeModsTomlSpec) {
-    fun parseMixinConfig(file: File): Boolean {
-        if (!file.exists()) return false
-        val root = Json.Default.parseToJsonElement(file.readText()).jsonObject
-        return listOf("mixins", "client", "server").any { key ->
-            root[key]?.jsonArray?.isNotEmpty() == true
-        }
-    }
-
-    fun addIfNonEmpty(name: String, file: File) {
-        if (parseMixinConfig(file)) toml.mixin(name)
-    }
-
-    addIfNonEmpty("${mod.id}.common.mixins.json", project(":Common").file("src/main/resources/common.mixins.json"))
-    addIfNonEmpty(
-        "${mod.id}.${name.lowercase()}.mixins.json",
-        file("src/main/resources/${name.lowercase()}.mixins.json")
-    )
 }
 
 private fun Project.addDependencies(toml: NeoForgeModsTomlSpec) {

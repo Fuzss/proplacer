@@ -144,6 +144,30 @@ abstract class MixinConfigJsonSpec {
     @get:Optional
     abstract val overwrites: Property<OverwritesSpec>
 
+    fun mixin(value: String) {
+        mixins.add(value)
+    }
+
+    fun accessor(value: String) {
+        mixins.add("accessor.${value}")
+    }
+
+    fun clientMixin(value: String) {
+        client.add("client.${value}")
+    }
+
+    fun clientAccessor(value: String) {
+        client.add("client.accessor.${value}")
+    }
+
+    fun serverMixin(value: String) {
+        server.add("server.${value}")
+    }
+
+    fun serverAccessor(value: String) {
+        server.add("server.accessor.${value}")
+    }
+
     fun injectors(action: Action<InjectorsSpec>) {
         val entry = objects.newInstance(InjectorsSpec::class.java).also { action.execute(it) }
         injectors.set(entry)

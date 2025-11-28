@@ -14,17 +14,20 @@ abstract class MultiLoaderExtension {
 
     @get:Input
     @get:Optional
-    abstract val modFileMetadata: Property<ModFileMetadataExtension>
+    abstract val modFile: Property<ModFileMetadataExtension>
 
     @get:Input
     @get:Optional
-    abstract val mixinConfig: Property<MixinConfigJsonSpec>
+    abstract val mixins: Property<Action<MixinConfigJsonSpec>>
 
-    fun modFileMetadata(configure: Action<ModFileMetadataExtension>) {
-        objects.newInstance(ModFileMetadataExtension::class.java).also { configure.execute(it) }
+    fun modFile(configure: Action<ModFileMetadataExtension>) {
+        objects.newInstance(ModFileMetadataExtension::class.java).also {
+            modFile.set(it)
+            configure.execute(it)
+        }
     }
 
-    fun mixinConfig(configure: Action<MixinConfigJsonSpec>) {
-        objects.newInstance(MixinConfigJsonSpec::class.java).also { configure.execute(it) }
+    fun mixins(configure: MixinConfigJsonSpec.() -> Unit) {
+        mixins.set(Action(configure))
     }
 }

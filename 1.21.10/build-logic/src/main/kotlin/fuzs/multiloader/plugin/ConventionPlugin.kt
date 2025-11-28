@@ -5,6 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.*
 
+@Deprecated("forRemoval")
 class ConventionPlugin : Plugin<Project> {
     override fun apply(project: Project): Unit = with(project) {
 

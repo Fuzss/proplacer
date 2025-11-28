@@ -7,7 +7,7 @@ dependencies {
 }
 
 multiLoader {
-    modFileMetadata {
+    modFile {
 //    enumExtensions.set("enumextensions.json")
         toml {
             mod("examplemod") {
@@ -27,5 +27,8 @@ multiLoader {
             extraArrayProperties("lithiumoptions", "mixinminimal_nonvanillaworldblock_entity_tickingsupport_cache", "ccc")
 //        features("examplemod", "openGLVersion", "[3.2,)")
         }
+    }
+    mixins {
+        accessor("BiomeSpecialEffectsBuilderNeoForgeAccessor")
     }
 }

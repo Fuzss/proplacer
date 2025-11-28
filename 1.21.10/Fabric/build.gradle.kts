@@ -8,7 +8,7 @@ dependencies {
 }
 
 multiLoader {
-    modFileMetadata {
+    modFile {
         json {
             customData.put("lithium:options", mapOf("mixin.minimal_nonvanilla.world.block_entity_ticking.support_cache" to false))
         }

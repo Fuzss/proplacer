@@ -1,27 +1,25 @@
 package fuzs.multiloader
 
 import mod
+import net.fabricmc.loom.task.AbstractRemapJarTask
 import versionCatalog
 
 plugins {
-    id("java")
-    id("java-library")
     id("dev.architectury.loom")
-    id("fuzs.multiloader.conventions-platform")
+    id("fuzs.multiloader.conventions-core")
 }
-
-//architectury {
-//    common(rootProject.subprojects.map { it.name.lowercase() }.filterNot { it.contains("common") })
-//}
 
 loom {
     accessWidenerPath.set(file("src/main/resources/${mod.id}.accesswidener"))
 }
 
 dependencies {
-    modCompileOnly(versionCatalog.findLibrary("fabricloader.fabric").get())
+    // TODO use version catalog
+    compileOnly("net.fabricmc:sponge-mixin:0.16.5+mixin.0.8.7")
+    compileOnly(versionCatalog.findLibrary("mixinextras.common").get())
+    annotationProcessor(versionCatalog.findLibrary("mixinextras.common").get())
 }
 
-tasks.withType<net.fabricmc.loom.task.AbstractRemapJarTask>().configureEach {
+tasks.withType<AbstractRemapJarTask>().configureEach {
     targetNamespace.set("named")
 }

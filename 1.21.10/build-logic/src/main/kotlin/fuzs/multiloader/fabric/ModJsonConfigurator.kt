@@ -1,13 +1,10 @@
 package fuzs.multiloader.fabric
 
+import fuzs.multiloader.extension.MultiLoaderExtension
 import fuzs.multiloader.metadata.DependencyType
 import fuzs.multiloader.metadata.EnvironmentProvider
 import fuzs.multiloader.metadata.LinkProvider
 import fuzs.multiloader.metadata.ModLoaderProvider
-import fuzs.multiloader.extension.MultiLoaderExtension
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import metadata
 import mod
 import net.fabricmc.loom.api.fmj.FabricModJsonV1Spec
@@ -15,31 +12,31 @@ import net.fabricmc.loom.task.FabricModJsonV1Task
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePluginExtension
 import versionCatalog
-import java.io.File
 import kotlin.jvm.optionals.getOrNull
 
 fun Project.configureModJson(task: FabricModJsonV1Task) {
-    task.outputFile.set(layout.buildDirectory.file("generated/resources/fabric.mod.json"))
     val multiLoaderExtension = extensions.getByType(MultiLoaderExtension::class.java)
+    task.outputFile.set(layout.buildDirectory.file("generated/resources/fabric.mod.json"))
 
     task.json {
         modId.set(mod.id)
         version.set(mod.version)
         name.set(mod.name)
         mod.authors.forEach { author(it) }
+        description.set(mod.description)
         addDistributions(this)
         licenses.add(mod.license)
-//        icon(135, "mod_logo.png")
         icon("mod_logo.png")
         configureEnvironment(this)
         addEntrypoints(this)
-        addMixinConfigs(this)
+        mixin("${mod.id}.common.mixins.json")
+        mixin("${mod.id}.${this@configureModJson.name.lowercase()}.mixins.json")
         addDependencies(this)
-        if (multiLoaderExtension.modFileMetadata.orNull?.library?.orNull == true) {
+        if (multiLoaderExtension.modFile.orNull?.library?.orNull == true) {
             customData.put("modmenu", mapOf("badges" to listOf("library")))
         }
 
-        multiLoaderExtension.modFileMetadata.orNull?.json?.orNull?.execute(this)
+        multiLoaderExtension.modFile.orNull?.json?.orNull?.execute(this)
     }
 }
 
@@ -84,33 +81,16 @@ private fun Project.addEntrypoints(json: FabricModJsonV1Spec) {
     val baseExtension = extensions.getByType(BasePluginExtension::class.java)
     val archivesName = baseExtension.archivesName.get()
     val multiLoaderExtension = extensions.getByType(MultiLoaderExtension::class.java)
-    val packagePrefix = multiLoaderExtension.modFileMetadata.orNull?.packagePrefix?.orNull
+    val packagePrefix = multiLoaderExtension.modFile.orNull?.packagePrefix?.orNull
         ?.takeIf { it.isNotEmpty() }
         ?.let { "$it." }
         ?: ""
 
     // Construct fully qualified class names for main and client entrypoints
-    addIfExists("main", "${group}.${name.lowercase()}.${packagePrefix}${archivesName}Fabric")
-    addIfExists("client", "${group}.${name.lowercase()}.${packagePrefix}client.${archivesName}FabricClient")
-}
-
-private fun Project.addMixinConfigs(json: FabricModJsonV1Spec) {
-    fun parseMixinConfig(file: File): Boolean {
-        if (!file.exists()) return false
-        val root = Json.Default.parseToJsonElement(file.readText()).jsonObject
-        return listOf("mixins", "client", "server").any { key ->
-            root[key]?.jsonArray?.isNotEmpty() == true
-        }
-    }
-
-    fun addIfNonEmpty(name: String, file: File) {
-        if (parseMixinConfig(file)) json.mixin(name)
-    }
-
-    addIfNonEmpty("${mod.id}.common.mixins.json", project(":Common").file("src/main/resources/common.mixins.json"))
-    addIfNonEmpty(
-        "${mod.id}.${name.lowercase()}.mixins.json",
-        file("src/main/resources/${name.lowercase()}.mixins.json")
+    addIfExists("main", "${project.group}.${project.name.lowercase()}.${packagePrefix}${archivesName}Fabric")
+    addIfExists(
+        "client",
+        "${project.group}.${project.name.lowercase()}.${packagePrefix}client.${archivesName}FabricClient"
     )
 }
 

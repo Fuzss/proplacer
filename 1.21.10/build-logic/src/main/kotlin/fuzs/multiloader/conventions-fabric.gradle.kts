@@ -1,34 +1,24 @@
 package fuzs.multiloader
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import fuzs.multiloader.fabric.configureModJson
-import fuzs.multiloader.neoforge.configureModsToml
-import fuzs.multiloader.neoforge.toml.NeoForgeModsTomlTask
+import fuzs.multiloader.mixin.MixinConfigJsonTask
 import mod
 import net.fabricmc.loom.task.FabricModJsonV1Task
 import net.fabricmc.loom.task.RemapJarTask
-import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.named
 import versionCatalog
 
 plugins {
-    id("java")
-    id("java-library")
-    id("com.gradleup.shadow")
-//    id("dev.architectury.loom")
+    id("dev.architectury.loom")
     id("fuzs.multiloader.conventions-platform")
 }
 
-//architectury {
-//    platformSetupLoomIde()
-//    fabric()
-//}
-
 loom {
-    accessWidenerPath = project(":Common").loom.accessWidenerPath
+    accessWidenerPath.set(project(":Common").loom.accessWidenerPath)
 
     runs {
         configureEach {
-            runDir = "../run"
+            runDir("../run")
             ideConfigGenerated(true)
             startFirstThread()
             vmArgs(
@@ -48,22 +38,14 @@ loom {
 
         named("client") {
             client()
-            configName = "${project.name} Client ${versionCatalog.findVersion("minecraft").get()}"
+            name("${project.name} Client ${versionCatalog.findVersion("minecraft").get()}")
         }
 
         named("server") {
             server()
-            configName = "${project.name} Server ${versionCatalog.findVersion("minecraft").get()}"
+            name("${project.name} Server ${versionCatalog.findVersion("minecraft").get()}")
         }
     }
-}
-
-configurations {
-    create("common")
-    create("shadowCommon")
-    compileClasspath.get().extendsFrom(getByName("common"))
-    runtimeClasspath.get().extendsFrom(getByName("common"))
-    getByName("developmentFabric").extendsFrom(getByName("common"))
 }
 
 repositories {
@@ -82,14 +64,6 @@ repositories {
 }
 
 dependencies {
-    configurations.getByName("common")(
-        project(path = ":Common", configuration = "namedElements")
-    ) { isTransitive = false }
-
-    configurations.getByName("shadowCommon")(
-        project(path = ":Common", configuration = "transformProductionFabric")
-    ) { isTransitive = false }
-
     modApi(versionCatalog.findLibrary("fabricloader.fabric").get())
 
     versionCatalog.findLibrary("modmenu.fabric")
@@ -97,42 +71,15 @@ dependencies {
         ?.let { modLocalRuntime(it) { isTransitive = false } }
 }
 
-tasks.withType<Jar>().configureEach {
-    exclude("architectury.common.json")
-}
-
-tasks.named<ShadowJar>("shadowJar") {
-    configurations = listOf(project.configurations.getByName("shadowCommon"))
-    archiveClassifier.set("dev-shadow")
-}
-
 tasks.named<RemapJarTask>("remapJar") {
-    inputFile.set(
-        tasks.named<ShadowJar>("shadowJar")
-            .flatMap { it.archiveFile })
-    dependsOn(tasks.named("shadowJar"))
-    archiveClassifier.set("")
     injectAccessWidener.set(true)
 }
 
-tasks.named<Jar>("jar") {
-    archiveClassifier.set("dev")
-}
-
-tasks.named<Jar>("sourcesJar") {
-    val commonSources = project(":Common").tasks.named<Jar>("sourcesJar")
-    dependsOn(commonSources)
-    from(provider {
-        zipTree(commonSources.get().archiveFile.get())
-    })
-}
-
-
-tasks.register<FabricModJsonV1Task>("generateModJson") {
+val generateModJson = tasks.register<FabricModJsonV1Task>("generateModJson") {
+    dependsOn(tasks.named<MixinConfigJsonTask>("generateMixinConfig"))
     configureModJson(this)
 }
 
-tasks.withType<ProcessResources> {
-    dependsOn(tasks.named("generateModJson"))
-    from(layout.buildDirectory.dir("generated/resources"))
+tasks.named<ProcessResources>("processResources") {
+    dependsOn(generateModJson)
 }

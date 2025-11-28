@@ -129,7 +129,7 @@ abstract class NeoForgeModsTomlSpec {
     init {
         // these are mandatory on older FML versions, so provide the defaults from modern versions
         modLoader.convention("javafml")
-        loaderVersion.convention(" ")
+        loaderVersion.convention("*")
         license.convention("All Rights Reserved")
     }
 

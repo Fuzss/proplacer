@@ -14,9 +14,9 @@ object MixinConfigJsonGenerator {
             priority = spec.priority.orNull,
             mixinPriority = spec.mixinPriority.orNull,
             mixinPackage = spec.mixinPackage.get(),
-            mixins = spec.mixins.orNull?.takeIf { it.isNotEmpty() },
-            client = spec.client.orNull?.takeIf { it.isNotEmpty() },
-            server = spec.server.orNull?.takeIf { it.isNotEmpty() },
+            mixins = spec.mixins.orNull?.takeIf { it.isNotEmpty() }?.sorted(),
+            client = spec.client.orNull?.takeIf { it.isNotEmpty() }?.sorted(),
+            server = spec.server.orNull?.takeIf { it.isNotEmpty() }?.sorted(),
             setSourceFile = spec.setSourceFile.orNull,
             refmap = spec.refmap.orNull,
             refmapWrapper = spec.refmapWrapper.orNull,
@@ -40,7 +40,10 @@ object MixinConfigJsonGenerator {
             }
         )
 
-        val json = Json { prettyPrint = true }
+        val json = Json {
+            prettyPrint = true
+            explicitNulls = false
+        }
         return json.encodeToString(input)
     }
 }
