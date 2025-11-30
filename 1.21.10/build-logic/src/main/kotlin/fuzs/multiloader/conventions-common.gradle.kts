@@ -1,5 +1,6 @@
 package fuzs.multiloader
 
+import fuzs.multiloader.architectury.ArchitecturyCommonJsonTask
 import mod
 import net.fabricmc.loom.task.AbstractRemapJarTask
 import versionCatalog
@@ -15,11 +16,23 @@ loom {
 
 dependencies {
     // TODO use version catalog
-    compileOnly("net.fabricmc:sponge-mixin:0.16.5+mixin.0.8.7")
-    compileOnly(versionCatalog.findLibrary("mixinextras.common").get())
-    annotationProcessor(versionCatalog.findLibrary("mixinextras.common").get())
+    loaderLibraries("net.fabricmc:sponge-mixin:0.16.5+mixin.0.8.7")
+    loaderLibraries(versionCatalog.findLibrary("mixinextras.common").get())
+//    annotationProcessor(versionCatalog.findLibrary("mixinextras.common").get())
+//    modCompileOnly(versionCatalog.findLibrary("fabricloader.fabric").get())
 }
 
 tasks.withType<AbstractRemapJarTask>().configureEach {
     targetNamespace.set("named")
+}
+
+val generateArchitecturyCommonJson = tasks.register<ArchitecturyCommonJsonTask>("generateArchitecturyCommonJson") {
+    outputFile.set(layout.buildDirectory.file("generated/resources/architectury.common.json"))
+    json {
+        accessWidener.set(loom.accessWidenerPath.map { it.asFile.name })
+    }
+}
+
+tasks.named<ProcessResources>("processResources") {
+    dependsOn(generateArchitecturyCommonJson)
 }

@@ -1,7 +1,6 @@
 package fuzs.multiloader
 
-import fuzs.multiloader.fabric.configureModJson
-import fuzs.multiloader.mixin.MixinConfigJsonTask
+import fuzs.multiloader.fabric.setupModJsonTask
 import mod
 import net.fabricmc.loom.task.FabricModJsonV1Task
 import net.fabricmc.loom.task.RemapJarTask
@@ -76,8 +75,7 @@ tasks.named<RemapJarTask>("remapJar") {
 }
 
 val generateModJson = tasks.register<FabricModJsonV1Task>("generateModJson") {
-    dependsOn(tasks.named<MixinConfigJsonTask>("generateMixinConfig"))
-    configureModJson(this)
+    setupModJsonTask()
 }
 
 tasks.named<ProcessResources>("processResources") {

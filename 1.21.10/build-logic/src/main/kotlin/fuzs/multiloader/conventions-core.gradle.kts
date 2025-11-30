@@ -6,10 +6,12 @@ import fuzs.multiloader.mixin.MixinConfigJsonTask
 import fuzs.multiloader.task.IncrementBuildNumber
 import metadata
 import mod
+import net.fabricmc.loom.LoomGradlePlugin
 import net.fabricmc.loom.task.RemapJarTask
 import versionCatalog
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 plugins {
     id("java")
@@ -202,14 +204,25 @@ tasks.withType<Jar>().configureEach {
             "Implementation-Version" to mod.version,
             "Implementation-Vendor" to mod.authors.joinToString(", "),
             "Implementation-Timestamp" to ZonedDateTime.now()
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")),
-            "Implementation-Timestamp-Milli" to System.currentTimeMillis(),
-            "Built-On-Java" to "${System.getProperty("java.vm.version")} (${System.getProperty("java.vm.vendor")})",
-            "Built-On-Minecraft" to versionCatalog.findVersion("game").get()
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"))
         )
         metadata.links.firstOrNull { it.name == LinkProvider.GITHUB }
             ?.url()
             ?.let { attributeMap["Implementation-URL"] = it }
+        attributeMap.putAll(
+            mapOf(
+                "Build-Tool-Name" to "Architectury Loom",
+                "Build-Tool-Version" to (LoomGradlePlugin::class.java.getPackage().implementationVersion ?: "unknown"),
+                "Build-Jdk-Name" to System.getProperty("java.vm.name"),
+                "Build-Jdk-Version" to System.getProperty("java.vm.version"),
+                "Build-Jdk-Vendor" to System.getProperty("java.vm.vendor"),
+                "Build-Jdk-Spec-Name" to System.getProperty("java.vm.specification.name"),
+                "Build-Jdk-Spec-Version" to System.getProperty("java.vm.specification.version"),
+                "Build-Jdk-Spec-Vendor" to System.getProperty("java.vm.specification.vendor"),
+                "Build-Os-Name" to "${System.getProperty("os.name")} (${System.getProperty("os.arch")})",
+                "Build-Os-Version" to System.getProperty("os.version")
+            )
+        )
         attributes(attributeMap)
     }
 
@@ -253,6 +266,13 @@ loom {
     }
 }
 
+sourceSets.main {
+    resources {
+        srcDir("src/generated/resources")
+        exclude(".cache/**")
+    }
+}
+
 configurations {
     create("commonJava") {
         isCanBeResolved = false
@@ -266,8 +286,8 @@ configurations {
 
 artifacts {
     val main by sourceSets.named("main")
-    add("commonJava", main.java.srcDirs.single())
-    add("commonResources", main.resources.srcDirs.single())
+    main.java.srcDirs.forEach { add("commonJava", it) }
+    main.resources.srcDirs.forEach { add("commonResources", it) }
 }
 
 dependencies {
@@ -286,11 +306,79 @@ dependencies {
     })
 }
 
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            artifactId = "${mod.id}-${project.name.lowercase()}"
+            version = mod.version
+
+            from(components["java"])
+
+            pom {
+                name.set("${mod.name} [${project.name}]")
+                description.set(mod.description)
+                metadata.links.firstOrNull { it.name == LinkProvider.GITHUB }
+                    ?.url()
+                    ?.let {
+                        url.set(it)
+
+                        scm {
+                            url.set(it)
+                            connection.set(it.replace("https", "scm:git:git") + ".git")
+                            developerConnection.set(
+                                it.replace(
+                                    "https://github.com/",
+                                    "scm:git:git@github.com:"
+                                ) + ".git"
+                            )
+                        }
+
+                        issueManagement {
+                            system.set("github")
+                            url.set("${it}/issues")
+                        }
+                    }
+
+                licenses {
+                    license {
+                        name.set(mod.license)
+                        url.set("https://spdx.org/licenses/${mod.license}.html")
+                    }
+                }
+
+                developers {
+                    for (author in mod.authors) {
+                        developer {
+                            id.set(author.lowercase())
+                            name.set(author)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = "FuzsModResources"
+            url = uri(
+                project.providers.gradleProperty("modResources")
+                    .map { "$it/maven" }
+                    .orElse(System.getenv("local_maven"))
+            )
+        }
+    }
+}
+
+signing {
+    sign(publishing.publications.named<MavenPublication>("mavenJava").get())
+}
+
 val generateMixinConfig = tasks.register<MixinConfigJsonTask>("generateMixinConfig") {
     val multiLoaderExtension = project.extensions.getByType(MultiLoaderExtension::class.java)
     outputFile.set(layout.buildDirectory.file("generated/resources/${mod.id}.${project.name.lowercase()}.mixins.json"))
 
-    config {
+    json {
         val platform = if (project.extra.has("loom.platform")) project.extra["loom.platform"] else null
         mixinPackage.set("${project.group}.${platform?.let { "${it}." }.orEmpty()}mixin")
         minVersion.set("0.8")
@@ -311,36 +399,35 @@ val generateMixinConfig = tasks.register<MixinConfigJsonTask>("generateMixinConf
 }
 
 tasks.named<ProcessResources>("processResources") {
-    dependsOn(generateMixinConfig)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    from(project(":Common").sourceSets["main"].resources)
-    from(project(":Common").file("src/generated/resources")) {
-        exclude(".cache/")
-    }
-}
-
-val incrementBuildNumber = tasks.register<IncrementBuildNumber>("incrementBuildNumber") {
-    val uniqueBuildNumberProperty = providers.gradleProperty("uniqueBuildNumber")
-    onlyIf { uniqueBuildNumberProperty.isPresent }
-    val propertiesFile = gradle.gradleUserHomeDir.resolve("gradle.properties")
-    inputFile.set(propertiesFile)
-    outputFile.set(propertiesFile)
+    dependsOn(generateMixinConfig)
+    from(project.layout.buildDirectory.dir("generated/resources"))
 }
 
 val copyDevelopmentJar = tasks.register<Copy>("copyDevelopmentJar") {
-    val uniqueBuildNumberProperty = providers.gradleProperty("uniqueBuildNumber")
     val buildJarOutputDirProperty = providers.gradleProperty("buildJarOutputDir")
-    onlyIf { uniqueBuildNumberProperty.isPresent && buildJarOutputDirProperty.isPresent }
+    onlyIf { buildJarOutputDirProperty.isPresent }
+
+    val incrementBuildNumber = rootProject.tasks.named<IncrementBuildNumber>("incrementBuildNumber")
+    dependsOn(incrementBuildNumber)
+
     val remapJar = tasks.named<RemapJarTask>("remapJar")
     dependsOn(remapJar)
     from(remapJar.flatMap { it.archiveFile })
     into(buildJarOutputDirProperty.get())
+
+    // This runs at configuration time before the properties file is updated.
+    // But that is fine as the value from the last run is still unique.
+    val buildPropertiesFile = rootProject.layout.buildDirectory.file("build.properties").get().asFile
+    val projectBuildNumber = Properties().apply {
+        if (buildPropertiesFile.exists()) load(buildPropertiesFile.inputStream())
+    }.getProperty("project.build") ?: "1"
     val oldValue = "v${mod.version}-mc"
-    val newValue = "v${mod.version}-dev.${uniqueBuildNumberProperty.get()}-mc"
+    val newValue = "v${mod.version}-dev.${projectBuildNumber}-mc"
+
     rename { it.replace(oldValue, newValue) }
 }
 
 tasks.named("build") {
-    finalizedBy(copyDevelopmentJar, incrementBuildNumber)
+    finalizedBy(copyDevelopmentJar)
 }

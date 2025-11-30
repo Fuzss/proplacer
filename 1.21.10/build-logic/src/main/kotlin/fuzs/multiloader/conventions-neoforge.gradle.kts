@@ -1,7 +1,6 @@
 package fuzs.multiloader
 
-import fuzs.multiloader.mixin.MixinConfigJsonTask
-import fuzs.multiloader.neoforge.configureModsToml
+import fuzs.multiloader.neoforge.setupModsTomlTask
 import fuzs.multiloader.neoforge.toml.NeoForgeModsTomlTask
 import mod
 import net.fabricmc.loom.task.RemapJarTask
@@ -90,8 +89,7 @@ tasks.named<RemapJarTask>("remapJar") {
 }
 
 val generateModsToml = tasks.register<NeoForgeModsTomlTask>("generateModsToml") {
-    dependsOn(tasks.named<MixinConfigJsonTask>("generateMixinConfig"))
-    configureModsToml(this)
+    setupModsTomlTask()
 }
 
 tasks.named<ProcessResources>("processResources") {

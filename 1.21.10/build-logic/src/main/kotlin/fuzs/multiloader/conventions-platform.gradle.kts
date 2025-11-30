@@ -23,14 +23,10 @@ dependencies {
     add("commonResources", project(mapOf("path" to ":Common", "configuration" to "commonResources")))
 }
 
-tasks.withType<Jar>().configureEach {
-    exclude("architectury.common.json")
-}
-
 tasks.named<JavaCompile>("compileJava") {
     dependsOn(configurations.named("commonJava"))
     source(configurations.named("commonJava"))
-    // create an empty refmap if none exists to prevent a warning from the mixin config that the refmap is missing
+    // Create an empty refmap if none exists to prevent a warning from the mixin config that the refmap is missing, which also shows up in production.
     @Suppress("UnstableApiUsage")
     val refmapFile = layout.buildDirectory.dir("classes/java/main/${loom.mixin.defaultRefmapName.get()}")
     doLast {
@@ -43,11 +39,12 @@ tasks.named<JavaCompile>("compileJava") {
 }
 
 tasks.named<ProcessResources>("processResources") {
-    dependsOn(project(":Common").tasks.withType<ProcessResources>())
     dependsOn(configurations.named("commonResources"))
     from(configurations.named("commonResources"))
-    from(project(":Common").layout.buildDirectory.dir("generated/resources"))
-    from(project.layout.buildDirectory.dir("generated/resources"))
+    dependsOn(project(":Common").tasks.named<ProcessResources>("processResources"))
+    from(project(":Common").layout.buildDirectory.dir("generated/resources")) {
+        exclude("architectury.common.json")
+    }
 }
 
 tasks.named<RemapJarTask>("remapJar") {

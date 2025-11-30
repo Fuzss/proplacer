@@ -18,10 +18,10 @@ abstract class IncrementBuildNumber : DefaultTask() {
 
     @TaskAction
     fun run() {
-        val file = inputFile.asFile.get()
-        val properties = Properties().apply { if (file.exists()) load(file.inputStream()) }
-        val uniqueBuildNumber = properties.getProperty("uniqueBuildNumber")?.toIntOrNull() ?: 0
-        properties.setProperty("uniqueBuildNumber", (uniqueBuildNumber + 1).toString())
+        val file = inputFile.asFile.orNull
+        val properties = Properties().apply { if (file?.exists() == true) load(file.inputStream()) }
+        val uniqueBuildNumber = properties.getProperty("project.build")?.toIntOrNull() ?: 1
+        properties.setProperty("project.build", (uniqueBuildNumber + 1).toString())
         outputFile.asFile.get().outputStream().use { properties.store(it, null) }
     }
 }
