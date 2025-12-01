@@ -1,0 +1,282 @@
+{
+    "accessories": {
+        "mod": {
+            "id": "accessories",
+            "name": "Accessories"
+        },
+        "links": [
+            {
+                "name": "curseforge",
+                "slug": "accessories",
+                "id": "938917"
+            },
+            {
+                "name": "modrinth",
+                "slug": "accessories",
+                "id": "jtmvUHXj"
+            }
+        ],
+        "environments": {
+            "client": "required",
+            "server": "required"
+        },
+        "platforms": [
+            "fabric",
+            "neoforge"
+        ]
+    },
+    "biolith": {
+        "mod": {
+            "id": "biolith",
+            "name": "Biolith"
+        },
+        "links": [
+            {
+                "name": "curseforge",
+                "slug": "biolith",
+                "id": "852512"
+            },
+            {
+                "name": "modrinth",
+                "slug": "biolith",
+                "id": "iGEl6Crx"
+            }
+        ],
+        "environments": {
+            "client": "required",
+            "server": "required"
+        },
+        "platforms": [
+            "fabric",
+            "neoforge"
+        ]
+    },
+    "curios": {
+        "mod": {
+            "id": "curios",
+            "name": "Curios"
+        },
+        "links": [
+            {
+                "name": "curseforge",
+                "slug": "curios",
+                "id": "309927"
+            },
+            {
+                "name": "modrinth",
+                "slug": "curios",
+                "id": "vvuO3ImH"
+            }
+        ],
+        "environments": {
+            "client": "required",
+            "server": "required"
+        },
+        "platforms": [
+            "neoforge"
+        ]
+    },
+    "fabricapi": {
+        "mod": {
+            "id": "fabric-api",
+            "name": "Fabric Api"
+        },
+        "links": [
+            {
+                "name": "curseforge",
+                "slug": "fabric-api",
+                "id": "306612"
+            },
+            {
+                "name": "modrinth",
+                "slug": "fabric-api",
+                "id": "P7dR8mSH"
+            }
+        ],
+        "environments": {
+            "client": "required",
+            "server": "required"
+        },
+        "platforms": [
+            "fabric"
+        ]
+    },
+    "forgeconfigapiport": {
+        "mod": {
+            "id": "forgeconfigapiport",
+            "name": "Forge Config Api Port"
+        },
+        "links": [
+            {
+                "name": "curseforge",
+                "slug": "forge-config-api-port-fabric",
+                "id": "547434"
+            },
+            {
+                "name": "modrinth",
+                "slug": "forge-config-api-port",
+                "id": "ohNO6lps"
+            }
+        ],
+        "environments": {
+            "client": "required",
+            "server": "required"
+        },
+        "platforms": [
+            "fabric"
+        ]
+    },
+    "geckolib": {
+        "mod": {
+            "id": "geckolib",
+            "name": "GeckoLib"
+        },
+        "links": [
+            {
+                "name": "curseforge",
+                "slug": "geckolib",
+                "id": "388172"
+            },
+            {
+                "name": "modrinth",
+                "slug": "geckolib",
+                "id": "8BmcQJ2H"
+            }
+        ],
+        "environments": {
+            "client": "required",
+            "server": "required"
+        },
+        "platforms": [
+            "fabric",
+            "neoforge"
+        ]
+    },
+    "modmenu": {
+        "mod": {
+            "id": "modmenu",
+            "name": "Mod Menu"
+        },
+        "links": [
+            {
+                "name": "curseforge",
+                "slug": "modmenu",
+                "id": "308702"
+            },
+            {
+                "name": "modrinth",
+                "slug": "modmenu",
+                "id": "mOgUt4GM"
+            }
+        ],
+        "environments": {
+            "client": "required",
+            "server": "unsupported"
+        },
+        "platforms": [
+            "fabric"
+        ]
+    },
+    "playeranimationlibrary": {
+        "mod": {
+            "id": "player_animation_library",
+            "name": "Player Animation Library"
+        },
+        "links": [
+            {
+                "name": "curseforge",
+                "slug": "player-animation-library",
+                "id": "1283899"
+            },
+            {
+                "name": "modrinth",
+                "slug": "player-animation-library",
+                "id": "ha1mEyJS"
+            }
+        ],
+        "environments": {
+            "client": "required",
+            "server": "unsupported"
+        },
+        "platforms": [
+            "fabric"
+        ]
+    },
+    "puzzleslib": {
+        "mod": {
+            "id": "puzzleslib",
+            "name": "Puzzles Lib"
+        },
+        "links": [
+            {
+                "name": "curseforge",
+                "slug": "puzzles-lib",
+                "id": "495476"
+            },
+            {
+                "name": "modrinth",
+                "slug": "puzzles-lib",
+                "id": "QAGBst4M"
+            }
+        ],
+        "environments": {
+            "client": "required",
+            "server": "required"
+        },
+        "platforms": [
+            "fabric",
+            "neoforge"
+        ]
+    },
+    "smartbrainlib": {
+        "mod": {
+            "id": "smartbrainlib",
+            "name": "SmartBrainLib"
+        },
+        "links": [
+            {
+                "name": "curseforge",
+                "slug": "smartbrainlib",
+                "id": "661293"
+            },
+            {
+                "name": "modrinth",
+                "slug": "smartbrainlib",
+                "id": "PuyPazRT"
+            }
+        ],
+        "environments": {
+            "client": "required",
+            "server": "required"
+        },
+        "platforms": [
+            "fabric",
+            "neoforge"
+        ]
+    },
+    "trinkets": {
+        "mod": {
+            "id": "trinkets",
+            "name": "Trinkets"
+        },
+        "links": [
+            {
+                "name": "curseforge",
+                "slug": "trinkets",
+                "id": "341284"
+            },
+            {
+                "name": "modrinth",
+                "slug": "trinkets",
+                "id": "5aaWibi9"
+            }
+        ],
+        "environments": {
+            "client": "required",
+            "server": "required"
+        },
+        "platforms": [
+            "fabric"
+        ]
+    }
+}

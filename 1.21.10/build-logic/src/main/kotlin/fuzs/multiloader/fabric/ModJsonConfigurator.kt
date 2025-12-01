@@ -1,8 +1,8 @@
 package fuzs.multiloader.fabric
 
+import externalMods
 import fuzs.multiloader.extension.MultiLoaderExtension
 import fuzs.multiloader.metadata.DependencyType
-import fuzs.multiloader.metadata.EnvironmentProvider
 import fuzs.multiloader.metadata.LinkProvider
 import fuzs.multiloader.metadata.ModLoaderProvider
 import metadata
@@ -28,7 +28,7 @@ fun FabricModJsonV1Task.setupModJsonTask() {
         configureEnvironment()
         addEntrypoints()
         mixin("${project.mod.id}.common.mixins.json")
-        mixin("${project.mod.id}.${this@setupModJsonTask.name.lowercase()}.mixins.json")
+        mixin("${project.mod.id}.${project.name.lowercase()}.mixins.json")
         addDependencies()
         if (multiLoaderExtension.modFile.orNull?.library?.orNull == true) {
             customData.put("modmenu", mapOf("badges" to listOf("library")))
@@ -56,15 +56,12 @@ private fun FabricModJsonV1Task.addDistributions() {
 }
 
 private fun FabricModJsonV1Task.configureEnvironment() {
-    fun supportsEnvironment(env: EnvironmentProvider) =
-        project.metadata.environments.any { it.name == env && it.type != DependencyType.UNSUPPORTED }
-
     json {
         environment.set(
             when {
-                supportsEnvironment(EnvironmentProvider.CLIENT) && supportsEnvironment(EnvironmentProvider.SERVER) -> "*"
-                supportsEnvironment(EnvironmentProvider.CLIENT) -> "client"
-                supportsEnvironment(EnvironmentProvider.SERVER) -> "server"
+                project.metadata.environments.client != DependencyType.UNSUPPORTED && project.metadata.environments.server != DependencyType.UNSUPPORTED -> "*"
+                project.metadata.environments.client != DependencyType.UNSUPPORTED -> "client"
+                project.metadata.environments.server != DependencyType.UNSUPPORTED -> "server"
                 else -> error("No environments defined")
             }
         )
@@ -72,7 +69,7 @@ private fun FabricModJsonV1Task.configureEnvironment() {
 }
 
 private fun FabricModJsonV1Task.addEntrypoints() {
-    // Helper to only add an entrypoint if the class file exists
+    // Helper to only add an entrypoint if the class file exists.
     fun addIfExists(type: String, className: String) {
         if (project.file("src/main/java/${className.replace('.', '/')}.java").exists()) {
             json.get().entrypoint(type, className)
@@ -88,7 +85,7 @@ private fun FabricModJsonV1Task.addEntrypoints() {
         ?.let { "$it." }
         ?: ""
 
-    // Construct fully qualified class names for main and client entrypoints
+    // Construct fully qualified class names for main and client entrypoints.
     addIfExists("main", "${project.group}.${project.name.lowercase()}.${packagePrefix}${archivesName}Fabric")
     addIfExists(
         "client",
@@ -121,11 +118,16 @@ private fun FabricModJsonV1Task.addDependencies() {
         depends("fabricloader", versionOrAny("fabricloader.min"))
 
         for (entry in project.metadata.dependencies) {
-            if (entry.type != DependencyType.UNSUPPORTED && (entry.platform == ModLoaderProvider.COMMON || entry.platform == ModLoaderProvider.FABRIC)) {
+            if (entry.platform.matches(ModLoaderProvider.FABRIC)) {
+                val modId = project.externalMods.mods[entry.name]?.mod?.id ?: entry.name
                 when (entry.name) {
-                    "fabricapi" -> depends("fabric-api", versionOrAny("fabricapi.min"))
-                    "puzzleslib" -> depends("puzzleslib", versionOrAny("puzzleslib.min"))
-                    else -> depends(entry.name, "*")
+                    "fabricapi" -> depends(modId, versionOrAny("fabricapi.min"))
+                    "puzzleslib" -> depends(modId, versionOrAny("puzzleslib.min"))
+                    else -> when {
+                        entry.type.required -> depends(modId, "*")
+                        entry.type == DependencyType.OPTIONAL -> recommends(modId, "*")
+                        entry.type == DependencyType.UNSUPPORTED -> breaks(modId, "*")
+                    }
                 }
             }
         }

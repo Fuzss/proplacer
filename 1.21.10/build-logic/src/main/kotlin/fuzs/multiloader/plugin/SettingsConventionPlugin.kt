@@ -1,5 +1,6 @@
 package fuzs.multiloader.plugin
 
+import net.fabricmc.loom.LoomGradleExtension
 import org.gradle.api.Plugin
 import org.gradle.api.initialization.Settings
 import org.gradle.api.initialization.dsl.VersionCatalogBuilder

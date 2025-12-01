@@ -2,13 +2,13 @@ plugins {
     id("fuzs.multiloader.conventions-common")
 }
 
-multiLoader {
+dependencies {
+    modApi(libs.puzzleslib.common)
+}
+
+multiloader {
     mixins {
         clientAccessor("MinecraftAccessor")
         clientAccessor("MultiPlayerGameModeAccessor")
     }
-}
-
-dependencies {
-    modApi(libs.puzzleslib.common)
 }

@@ -18,8 +18,6 @@ dependencies {
     // TODO use version catalog
     loaderLibraries("net.fabricmc:sponge-mixin:0.16.5+mixin.0.8.7")
     loaderLibraries(versionCatalog.findLibrary("mixinextras.common").get())
-//    annotationProcessor(versionCatalog.findLibrary("mixinextras.common").get())
-//    modCompileOnly(versionCatalog.findLibrary("fabricloader.fabric").get())
 }
 
 tasks.withType<AbstractRemapJarTask>().configureEach {

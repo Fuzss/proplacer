@@ -1,9 +1,11 @@
 package fuzs.multiloader.neoforge
 
+import externalMods
 import fuzs.multiloader.extension.MultiLoaderExtension
 import fuzs.multiloader.metadata.DependencyType
 import fuzs.multiloader.metadata.LinkProvider
 import fuzs.multiloader.metadata.ModLoaderProvider
+import fuzs.multiloader.neoforge.toml.NeoForgeModsTomlSpec
 import fuzs.multiloader.neoforge.toml.NeoForgeModsTomlTask
 import metadata
 import mod
@@ -39,7 +41,7 @@ fun NeoForgeModsTomlTask.setupModsTomlTask() {
         }
 
         mixin("${project.mod.id}.common.mixins.json")
-        mixin("${project.mod.id}.${name.lowercase()}.mixins.json")
+        mixin("${project.mod.id}.${project.name.lowercase()}.mixins.json")
         addDependencies()
         multiLoaderExtension.modFile.orNull?.toml?.orNull?.execute(this)
     }
@@ -75,15 +77,21 @@ private fun NeoForgeModsTomlTask.addDependencies() {
         }
 
         for (entry in project.metadata.dependencies) {
-            if (entry.type != DependencyType.UNSUPPORTED && (entry.platform == ModLoaderProvider.COMMON || entry.platform == ModLoaderProvider.NEOFORGE)) {
+            if (entry.platform.matches(ModLoaderProvider.NEOFORGE)) {
+                val modId = project.externalMods.mods[entry.name]?.mod?.id ?: entry.name
                 when (entry.name) {
                     "puzzleslib" -> dependency(project.mod.id) {
-                        modId.set("puzzleslib")
+                        this.modId.set(modId)
                         version("puzzleslib.min")?.let { versionRange.set(it) }
                     }
 
                     else -> dependency(project.mod.id) {
-                        modId.set(entry.name)
+                        this.modId.set(modId)
+                        when {
+                            entry.type.required -> Unit
+                            entry.type == DependencyType.OPTIONAL -> type.set(NeoForgeModsTomlSpec.DependencySpec.Type.OPTIONAL)
+                            entry.type == DependencyType.UNSUPPORTED -> type.set(NeoForgeModsTomlSpec.DependencySpec.Type.INCOMPATIBLE)
+                        }
                     }
                 }
             }

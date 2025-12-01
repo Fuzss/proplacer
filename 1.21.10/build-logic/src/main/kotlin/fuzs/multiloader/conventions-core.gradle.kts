@@ -23,7 +23,7 @@ plugins {
     id("me.modmuss50.mod-publish-plugin")
 }
 
-extensions.create<MultiLoaderExtension>("multiLoader")
+extensions.create<MultiLoaderExtension>("multiloader")
 
 base.archivesName = mod.name.replace("[^a-zA-Z]".toRegex(), "")
 version = "v${mod.version}-mc${versionCatalog.findVersion("minecraft").get()}-${project.name}"
@@ -196,20 +196,22 @@ tasks.withType<Jar>().configureEach {
     from(rootProject.file("CHANGELOG.md"))
 
     manifest {
-        val attributeMap = mutableMapOf<String, Any>(
-            "Specification-Title" to mod.name,
-            "Specification-Version" to mod.version,
-            "Specification-Vendor" to mod.authors.joinToString(", "),
-            "Implementation-Title" to mod.name,
-            "Implementation-Version" to mod.version,
-            "Implementation-Vendor" to mod.authors.joinToString(", "),
-            "Implementation-Timestamp" to ZonedDateTime.now()
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"))
+        attributes(
+            mapOf(
+                "Specification-Title" to mod.name,
+                "Specification-Version" to mod.version,
+                "Specification-Vendor" to mod.authors.joinToString(", "),
+                "Implementation-Title" to mod.name,
+                "Implementation-Version" to mod.version,
+                "Implementation-Vendor" to mod.authors.joinToString(", "),
+                "Implementation-Timestamp" to ZonedDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"))
+            )
         )
         metadata.links.firstOrNull { it.name == LinkProvider.GITHUB }
             ?.url()
-            ?.let { attributeMap["Implementation-URL"] = it }
-        attributeMap.putAll(
+            ?.let { attributes["Implementation-URL"] = it }
+        attributes(
             mapOf(
                 "Build-Tool-Name" to "Architectury Loom",
                 "Build-Tool-Version" to (LoomGradlePlugin::class.java.getPackage().implementationVersion ?: "unknown"),
@@ -223,7 +225,6 @@ tasks.withType<Jar>().configureEach {
                 "Build-Os-Version" to System.getProperty("os.version")
             )
         )
-        attributes(attributeMap)
     }
 
     group = "jar"
@@ -405,8 +406,8 @@ tasks.named<ProcessResources>("processResources") {
 }
 
 val copyDevelopmentJar = tasks.register<Copy>("copyDevelopmentJar") {
-    val buildJarOutputDirProperty = providers.gradleProperty("buildJarOutputDir")
-    onlyIf { buildJarOutputDirProperty.isPresent }
+    val buildOutputProperty = providers.gradleProperty("fuzs.multiloader.build.output")
+    onlyIf { buildOutputProperty.isPresent }
 
     val incrementBuildNumber = rootProject.tasks.named<IncrementBuildNumber>("incrementBuildNumber")
     dependsOn(incrementBuildNumber)
@@ -414,7 +415,7 @@ val copyDevelopmentJar = tasks.register<Copy>("copyDevelopmentJar") {
     val remapJar = tasks.named<RemapJarTask>("remapJar")
     dependsOn(remapJar)
     from(remapJar.flatMap { it.archiveFile })
-    into(buildJarOutputDirProperty.get())
+    into(buildOutputProperty.get())
 
     // This runs at configuration time before the properties file is updated.
     // But that is fine as the value from the last run is still unique.

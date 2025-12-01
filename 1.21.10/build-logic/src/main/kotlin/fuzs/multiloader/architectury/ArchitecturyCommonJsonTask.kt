@@ -1,6 +1,5 @@
 package fuzs.multiloader.architectury
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
@@ -62,10 +61,8 @@ abstract class GenerateJsonWorkAction : WorkAction<GenerateJsonParameters> {
                 }
         )
 
-        @OptIn(ExperimentalSerializationApi::class)
         val json = Json {
             prettyPrint = true
-            prettyPrintIndent = "  "
             explicitNulls = false
         }
 

@@ -1,11 +1,16 @@
 package fuzs.multiloader
 
+import fuzs.multiloader.metadata.LinkProvider
 import fuzs.multiloader.neoforge.setupModsTomlTask
 import fuzs.multiloader.neoforge.toml.NeoForgeModsTomlTask
+import fuzs.multiloader.neoforge.update.NeoForgeUpdateJson
+import kotlinx.serialization.json.Json
+import me.modmuss50.mpp.PublishModTask
+import metadata
 import mod
 import net.fabricmc.loom.task.RemapJarTask
-import org.gradle.kotlin.dsl.named
 import versionCatalog
+import kotlin.jvm.java
 
 plugins {
     id("dev.architectury.loom")
@@ -94,4 +99,34 @@ val generateModsToml = tasks.register<NeoForgeModsTomlTask>("generateModsToml") 
 
 tasks.named<ProcessResources>("processResources") {
     dependsOn(generateModsToml)
+}
+
+val refreshUpdateJson = tasks.register("refreshUpdateJson") {
+    val projectResourcesProperty = providers.gradleProperty("fuzs.multiloader.project.resources")
+    val file = File(projectResourcesProperty.get(), "update/${mod.id}.json")
+    val homepage = metadata.links.firstOrNull { it.name == LinkProvider.GITHUB }
+        ?.url()
+    val minecraftVersion = versionCatalog.findVersion("minecraft").get()
+    val modVersion = mod.version
+
+    onlyIf { projectResourcesProperty.isPresent && homepage != null }
+
+    doLast {
+        val json = Json { prettyPrint = true }
+        val promos = if (file.exists()) {
+            val updateJson = json.decodeFromString<NeoForgeUpdateJson>(file.readText())
+            updateJson.promos.toMutableMap()
+        } else {
+            mutableMapOf()
+        }
+
+        promos["${minecraftVersion}-latest"] = modVersion
+        promos["${minecraftVersion}-recommended"] = modVersion
+
+        file.writeText(json.encodeToString(NeoForgeUpdateJson(homepage!!, promos.toSortedMap())))
+    }
+}
+
+tasks.withType(PublishModTask::class.java).configureEach {
+    finalizedBy(refreshUpdateJson)
 }

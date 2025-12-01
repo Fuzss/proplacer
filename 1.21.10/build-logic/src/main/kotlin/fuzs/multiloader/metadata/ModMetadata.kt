@@ -9,14 +9,13 @@ data class ModMetadata(
     val mod: ModEntry,
     val dependencies: List<DependencyEntry>,
     val links: List<DistributionEntry>,
-    val environments: List<EnvironmentEntry>,
+    val environments: EnvironmentsEntry,
     val platforms: List<ModLoaderProvider>
 )
 
 @Serializable
 data class ModEntry(
     val id: String,
-    val namespace: String? = null,
     val group: String,
     val name: String,
     val version: String,
@@ -42,42 +41,38 @@ data class DistributionEntry(
 }
 
 @Serializable
-data class EnvironmentEntry(
-    val name: EnvironmentProvider,
-    val type: DependencyType
+data class EnvironmentsEntry(
+    val client: DependencyType,
+    val server: DependencyType
 )
 
 enum class ModLoaderProvider(val platform: Boolean = true) {
     @SerialName("common")
-    COMMON(false),
+    COMMON(false) {
+        override fun matches(modLoader: ModLoaderProvider): Boolean = true
+    },
 
     @SerialName("fabric")
     FABRIC,
 
-    @SerialName("forge")
-    FORGE,
-
     @SerialName("neoforge")
-    NEOFORGE
+    NEOFORGE;
+
+    open fun matches(modLoader: ModLoaderProvider): Boolean = this == modLoader
 }
 
-enum class EnvironmentProvider {
-    @SerialName("client")
-    CLIENT,
-
-    @SerialName("server")
-    SERVER
-}
-
-enum class DependencyType {
+enum class DependencyType(val required: Boolean) {
     @SerialName("required")
-    REQUIRED,
+    REQUIRED(true),
+
+    @SerialName("embedded")
+    EMBEDDED(true),
 
     @SerialName("optional")
-    OPTIONAL,
+    OPTIONAL(false),
 
     @SerialName("unsupported")
-    UNSUPPORTED
+    UNSUPPORTED(false)
 }
 
 enum class LinkProvider(val baseUrl: String) {
@@ -90,7 +85,7 @@ enum class LinkProvider(val baseUrl: String) {
     @SerialName("modrinth")
     MODRINTH("https://modrinth.com/mod/");
 
-    fun url(slug: String?): String = "${baseUrl}${slug ?: ""}"
+    fun url(slug: String): String = "${baseUrl}${slug}"
 }
 
 fun Project.loadMetadata(): ModMetadata {
@@ -109,9 +104,9 @@ fun Project.loadMetadata(): ModMetadata {
 
     val dependencies = dependencyProperties.map { (key, value) ->
         DependencyEntry(
-            name = key.substringAfter('.'),
-            platform = ModLoaderProvider.valueOf(key.substringBefore('.').uppercase()),
-            type = DependencyType.valueOf(value.uppercase())
+            key.substringAfter('.'),
+            ModLoaderProvider.valueOf(key.substringBefore('.').uppercase()),
+            DependencyType.valueOf(value.uppercase())
         )
     }
 
@@ -121,20 +116,21 @@ fun Project.loadMetadata(): ModMetadata {
         .map { (name, entries) ->
             val map = entries.associate { it.key.substringAfter('.') to it.value }
             DistributionEntry(
-                name = LinkProvider.valueOf(name.uppercase()),
-                slug = map["slug"] ?: "",
-                id = map["id"]
+                LinkProvider.valueOf(name.uppercase()),
+                map["slug"]!!,
+                map["id"]
             )
         }
 
-    val environments = environmentProperties.map { (name, type) ->
-        EnvironmentEntry(
-            name = EnvironmentProvider.valueOf(name.uppercase()),
-            type = DependencyType.valueOf(type.uppercase())
-        )
-    }.also {
-        require(it.isNotEmpty()) { "No environments defined" }
-    }
+    val environments =
+        EnvironmentsEntry(
+            environmentProperties["client"]?.uppercase()?.let { DependencyType.valueOf(it) }
+                ?: DependencyType.UNSUPPORTED,
+            environmentProperties["server"]?.uppercase()?.let { DependencyType.valueOf(it) }
+                ?: DependencyType.UNSUPPORTED
+        ).also {
+            require(it.client != DependencyType.UNSUPPORTED || it.server != DependencyType.UNSUPPORTED) { "No environments defined" }
+        }
 
     val platformList = properties["project.platforms"]
         ?.split(',')
@@ -152,17 +148,17 @@ fun Project.loadMetadata(): ModMetadata {
 
     return ModMetadata(
         ModEntry(
-            id = properties["mod.id"]!!,
-            group = properties["mod.group"]!!,
-            name = properties["mod.name"]!!,
-            version = properties["mod.version"]!!,
-            authors = authorList,
-            description = properties["mod.description"]!!,
-            license = properties["mod.license"]!!
+            properties["mod.id"]!!,
+            properties["mod.group"]!!,
+            properties["mod.name"]!!,
+            properties["mod.version"]!!,
+            authorList,
+            properties["mod.description"]!!,
+            properties["mod.license"]!!
         ),
-        platforms = platforms,
-        dependencies = dependencies,
-        links = distributions,
-        environments = environments
+        dependencies,
+        distributions,
+        environments,
+        platforms
     )
 }
