@@ -1,10 +1,30 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        maven("https://maven.architectury.dev/")
-        maven("https://maven.fabricmc.net/")
-        maven("https://maven.neoforged.net/releases/")
-        maven("https://maven.minecraftforge.net/")
+        maven {
+            name = "Architectury"
+            url = uri("https://maven.architectury.dev/")
+        }
+        maven {
+            name = "Fabric"
+            url = uri("https://maven.fabricmc.net/")
+        }
+        maven {
+            name = "NeoForge"
+            url = uri("https://maven.neoforged.net/releases/")
+        }
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "Forge"
+                    url = uri("https://maven.minecraftforge.net")
+                }
+            }
+            filter {
+                @Suppress("UnstableApiUsage")
+                includeGroupAndSubgroups("net.minecraftforge")
+            }
+        }
     }
 
     includeBuild("build-logic")

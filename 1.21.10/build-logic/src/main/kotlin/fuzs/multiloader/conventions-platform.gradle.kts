@@ -97,9 +97,7 @@ publishMods {
     val changelogFile = file("../CHANGELOG.md")
     val changelogText = changelogFile.readText()
     val minecraftVersion = versionCatalog.findVersion("minecraft").get().requiredVersion
-    displayName.set(
-        "[${name.uppercase()}] [$minecraftVersion] ${base.archivesName.get()} v${mod.version}"
-    )
+    displayName.set("[${name.uppercase()}] [$minecraftVersion] ${base.archivesName.get()} v${mod.version}")
     type.set(STABLE)
     version.set(mod.version)
     modLoaders.add(name.lowercase())
@@ -107,7 +105,8 @@ publishMods {
 
     for (link in metadata.links) {
         val uploadTokenProperty =
-            providers.gradleProperty("fuzs.multiloader.upload.${link.name.name.lowercase()}.token")
+            providers.gradleProperty("fuzs.multiloader.remote.${link.name.name.lowercase()}.token")
+
         when (link.name) {
             LinkProvider.CURSEFORGE -> {
                 curseforge {
@@ -154,7 +153,7 @@ publishMods {
                     accessToken.set(uploadTokenProperty)
                     repository.set(link.url().replace("https://github.com/", ""))
                     commitish.set("main")
-                    tagName.set("v${mod.version}+mc$minecraftVersion/${name.lowercase()}")
+                    tagName.set("v${mod.version}-mc$minecraftVersion/${name.lowercase()}")
 
                     // Only include the relevant changelog section.
                     val changelogSections = changelogText.split(Regex("(?m)^## \\["), limit = 3)

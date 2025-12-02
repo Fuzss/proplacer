@@ -44,7 +44,11 @@ data class DistributionEntry(
 data class EnvironmentsEntry(
     val client: DependencyType,
     val server: DependencyType
-)
+) {
+    fun forBoth() = !client.unsupported && !server.unsupported
+    fun clientOnly() = !client.unsupported && server.unsupported
+    fun serverOnly() = client.unsupported && !server.unsupported
+}
 
 enum class ModLoaderProvider(val platform: Boolean = true) {
     @SerialName("common")
@@ -61,18 +65,22 @@ enum class ModLoaderProvider(val platform: Boolean = true) {
     open fun matches(modLoader: ModLoaderProvider): Boolean = this == modLoader
 }
 
-enum class DependencyType(val required: Boolean) {
+enum class DependencyType(
+    val required: Boolean = false,
+    val optional: Boolean = false,
+    val unsupported: Boolean = false
+) {
     @SerialName("required")
-    REQUIRED(true),
+    REQUIRED(required = true),
 
     @SerialName("embedded")
-    EMBEDDED(true),
+    EMBEDDED(required = true),
 
     @SerialName("optional")
-    OPTIONAL(false),
+    OPTIONAL(optional = true),
 
     @SerialName("unsupported")
-    UNSUPPORTED(false)
+    UNSUPPORTED(unsupported = true)
 }
 
 enum class LinkProvider(val baseUrl: String) {
@@ -125,11 +133,11 @@ fun Project.loadMetadata(): ModMetadata {
     val environments =
         EnvironmentsEntry(
             environmentProperties["client"]?.uppercase()?.let { DependencyType.valueOf(it) }
-                ?: DependencyType.UNSUPPORTED,
+                ?: DependencyType.REQUIRED,
             environmentProperties["server"]?.uppercase()?.let { DependencyType.valueOf(it) }
-                ?: DependencyType.UNSUPPORTED
+                ?: DependencyType.REQUIRED
         ).also {
-            require(it.client != DependencyType.UNSUPPORTED || it.server != DependencyType.UNSUPPORTED) { "No environments defined" }
+            require(!it.client.unsupported || !it.server.unsupported) { "No environments defined" }
         }
 
     val platformList = properties["project.platforms"]

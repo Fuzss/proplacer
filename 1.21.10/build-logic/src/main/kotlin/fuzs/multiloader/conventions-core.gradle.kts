@@ -102,7 +102,8 @@ repositories {
             }
         }
         filter {
-            includeGroupByRegex("com\\.zigythebird(\\..+)?")
+            @Suppress("UnstableApiUsage")
+            includeGroupAndSubgroups("com.zigythebird")
         }
     }
 

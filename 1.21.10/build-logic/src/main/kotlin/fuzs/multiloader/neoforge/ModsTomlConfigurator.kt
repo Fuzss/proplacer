@@ -2,7 +2,6 @@ package fuzs.multiloader.neoforge
 
 import externalMods
 import fuzs.multiloader.extension.MultiLoaderExtension
-import fuzs.multiloader.metadata.DependencyType
 import fuzs.multiloader.metadata.LinkProvider
 import fuzs.multiloader.metadata.ModLoaderProvider
 import fuzs.multiloader.neoforge.toml.NeoForgeModsTomlSpec
@@ -14,15 +13,15 @@ import kotlin.jvm.optionals.getOrNull
 
 fun NeoForgeModsTomlTask.setupModsTomlTask() {
     val multiLoaderExtension = project.extensions.getByType(MultiLoaderExtension::class.java)
+    val remoteResourcesProperty = project.providers.gradleProperty("fuzs.multiloader.remote.resources")
     outputFile.set(project.layout.buildDirectory.file("generated/resources/META-INF/neoforge.mods.toml"))
 
     toml {
-        val githubUrl = project.metadata.links
+        license.set(project.mod.license)
+        project.metadata.links
             .firstOrNull { it.name == LinkProvider.GITHUB }
             ?.url()
-
-        license.set(project.mod.license)
-        githubUrl?.let { issueTrackerURL.set("${it}/issues") }
+            ?.let { issueTrackerURL.set("$it/issues") }
 
         mod {
             modId.set(project.mod.id)
@@ -31,12 +30,12 @@ fun NeoForgeModsTomlTask.setupModsTomlTask() {
             version.set(project.mod.version)
             authors.set(project.mod.authors.joinToString(", "))
             logoFile.set("mod_logo.png")
-            githubUrl?.let {
-                modUrl.set(it)
-                displayURL.set(it)
-            }
+            project.metadata.links
+                .firstOrNull { it.name == LinkProvider.MODRINTH }
+                ?.url()
+                ?.let { displayURL.set(it) }
 
-            updateJSONURL.set("https://raw.githubusercontent.com/Fuzss/modresources/main/update/${project.mod.id}.json")
+            updateJSONURL.set("${remoteResourcesProperty.get()}/update/${project.mod.id}.json")
             multiLoaderExtension.modFile.orNull?.enumExtensions?.orNull?.let { enumExtensions.set(it) }
         }
 
@@ -67,12 +66,15 @@ private fun NeoForgeModsTomlTask.addDependencies() {
             project.mod.id
         ) {
             modId.set("minecraft")
-            versionRange.set(project.versionCatalog.findVersion("minecraft").get().requiredVersion.let {
-                "[${it},${incrementPatch(it)})"
-            })
+            type.set(NeoForgeModsTomlSpec.DependencySpec.Type.REQUIRED)
+            versionRange.set(
+                project.versionCatalog.findVersion("minecraft").get().requiredVersion
+                    .let { "[${it},${incrementPatch(it)})" }
+            )
         }
         dependency(project.mod.id) {
             modId.set("neoforge")
+            type.set(NeoForgeModsTomlSpec.DependencySpec.Type.REQUIRED)
             version("neoforge.min")?.let { versionRange.set(it) }
         }
 
@@ -82,15 +84,16 @@ private fun NeoForgeModsTomlTask.addDependencies() {
                 when (entry.name) {
                     "puzzleslib" -> dependency(project.mod.id) {
                         this.modId.set(modId)
+                        type.set(NeoForgeModsTomlSpec.DependencySpec.Type.REQUIRED)
                         version("puzzleslib.min")?.let { versionRange.set(it) }
                     }
 
                     else -> dependency(project.mod.id) {
                         this.modId.set(modId)
                         when {
-                            entry.type.required -> Unit
-                            entry.type == DependencyType.OPTIONAL -> type.set(NeoForgeModsTomlSpec.DependencySpec.Type.OPTIONAL)
-                            entry.type == DependencyType.UNSUPPORTED -> type.set(NeoForgeModsTomlSpec.DependencySpec.Type.INCOMPATIBLE)
+                            entry.type.required -> type.set(NeoForgeModsTomlSpec.DependencySpec.Type.REQUIRED)
+                            entry.type.optional -> type.set(NeoForgeModsTomlSpec.DependencySpec.Type.OPTIONAL)
+                            entry.type.unsupported -> type.set(NeoForgeModsTomlSpec.DependencySpec.Type.INCOMPATIBLE)
                         }
                     }
                 }

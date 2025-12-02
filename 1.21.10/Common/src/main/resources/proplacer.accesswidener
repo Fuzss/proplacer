@@ -1,5 +1,1 @@
 accessWidener   v2  named
-accessible  field   net/minecraft/client/gui/screens/TitleScreen    realmsNotificationsScreen   Lcom/mojang/realmsclient/gui/screens/RealmsNotificationsScreen;
-transitive-accessible   field   net/minecraft/world/level/ServerExplosion   damageSource    Lnet/minecraft/world/damagesource/DamageSource;
-transitive-accessible   field   net/minecraft/world/level/ServerExplosion   damageCalculator    Lnet/minecraft/world/level/ExplosionDamageCalculator;
-transitive-accessible   field   net/minecraft/world/level/ServerExplosion   blockInteraction    Lnet/minecraft/world/level/Explosion$BlockInteraction;

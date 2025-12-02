@@ -2,7 +2,6 @@ package fuzs.multiloader.fabric
 
 import externalMods
 import fuzs.multiloader.extension.MultiLoaderExtension
-import fuzs.multiloader.metadata.DependencyType
 import fuzs.multiloader.metadata.LinkProvider
 import fuzs.multiloader.metadata.ModLoaderProvider
 import metadata
@@ -40,31 +39,34 @@ fun FabricModJsonV1Task.setupModJsonTask() {
 
 private fun FabricModJsonV1Task.addDistributions() {
     json {
-        val githubUrl = project.metadata.links
-            .firstOrNull { it.name == LinkProvider.GITHUB }
-            ?.url()
-        githubUrl?.let {
-            contactInformation.putAll(
-                mapOf(
-                    "homepage" to it,
-                    "sources" to it,
-                    "issues" to "${it}/issues"
+        project.metadata.links
+            .firstOrNull { it.name == LinkProvider.MODRINTH }
+            ?.url()?.let {
+                contactInformation.put(
+                    "homepage", it
                 )
-            )
-        }
+            }
+
+        project.metadata.links
+            .firstOrNull { it.name == LinkProvider.GITHUB }
+            ?.url()?.let {
+                contactInformation.putAll(
+                    mapOf(
+                        "sources" to it,
+                        "issues" to "$it/issues"
+                    )
+                )
+            }
     }
 }
 
 private fun FabricModJsonV1Task.configureEnvironment() {
     json {
-        environment.set(
-            when {
-                project.metadata.environments.client != DependencyType.UNSUPPORTED && project.metadata.environments.server != DependencyType.UNSUPPORTED -> "*"
-                project.metadata.environments.client != DependencyType.UNSUPPORTED -> "client"
-                project.metadata.environments.server != DependencyType.UNSUPPORTED -> "server"
-                else -> error("No environments defined")
-            }
-        )
+        when {
+            project.metadata.environments.forBoth() -> environment.set("*")
+            project.metadata.environments.clientOnly() -> client()
+            project.metadata.environments.serverOnly() -> server()
+        }
     }
 }
 
@@ -125,8 +127,8 @@ private fun FabricModJsonV1Task.addDependencies() {
                     "puzzleslib" -> depends(modId, versionOrAny("puzzleslib.min"))
                     else -> when {
                         entry.type.required -> depends(modId, "*")
-                        entry.type == DependencyType.OPTIONAL -> recommends(modId, "*")
-                        entry.type == DependencyType.UNSUPPORTED -> breaks(modId, "*")
+                        entry.type.optional -> recommends(modId, "*")
+                        entry.type.unsupported -> breaks(modId, "*")
                     }
                 }
             }

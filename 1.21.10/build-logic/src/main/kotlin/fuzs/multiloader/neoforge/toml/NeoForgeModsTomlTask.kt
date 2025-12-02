@@ -106,14 +106,15 @@ abstract class GenerateTomlWorkAction : WorkAction<GenerateTomlParameters> {
                     )
                 },
             spec.dependencies.orNull?.takeIf { it.isNotEmpty() }?.map {
+                val properties = it.properties.get()
                 it.modId.get() to DependencyEntry(
-                    it.properties.modId.get(),
-                    it.properties.type.orNull,
-                    it.properties.reason.orNull,
-                    it.properties.versionRange.orNull,
-                    it.properties.ordering.orNull,
-                    it.properties.side.orNull,
-                    it.properties.referralUrl.orNull
+                    properties.modId.get(),
+                    properties.type.orNull,
+                    properties.reason.orNull,
+                    properties.versionRange.orNull,
+                    properties.ordering.orNull,
+                    properties.side.orNull,
+                    properties.referralUrl.orNull
                 )
             }
                 ?.groupBy({ it.first }, { it.second }),

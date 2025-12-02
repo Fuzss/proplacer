@@ -5,6 +5,7 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
 import javax.inject.Inject
 
@@ -24,7 +25,7 @@ abstract class ArchitecturyCommonJsonSpec {
      *
      * The keys are the Minecraft class names in Intermediary mappings, and the values are the interfaces to inject as arrays.
      */
-    @get:Input
+    @get:Nested
     @get:Optional
     abstract val injectedInterfaces: ListProperty<InjectedInterfacesSpec>
 

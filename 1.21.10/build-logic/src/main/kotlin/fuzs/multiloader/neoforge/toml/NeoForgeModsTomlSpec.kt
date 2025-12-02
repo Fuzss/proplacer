@@ -73,61 +73,61 @@ abstract class NeoForgeModsTomlSpec {
     /**
      * Mod-specific properties are tied to the specified mod using the `[[mods]]` header. This is an [array of tables](https://toml.io/en/v1.0.0#array-of-tables); all key/value properties will be attached to that mod until the next header.
      */
-    @get:Input
+    @get:Nested
     @get:Optional
     abstract val mods: ListProperty<ModSpec>
 
     /**
      * See [features](https://docs.neoforged.net/docs/gettingstarted/modfiles#features).
      */
-    @get:Input
+    @get:Nested
     @get:Optional
     abstract val features: ListProperty<FeaturesSpec>
 
     /**
      * A table of key/values associated with this mod. Unused by NeoForge, but is mainly for use by mods.
      */
-    @get:Input
+    @get:Nested
     @get:Optional
     abstract val modProperties: ListProperty<ModPropertiesSpec>
 
     /**
      * [Access Transformer-specific properties](https://docs.neoforged.net/docs/advanced/accesstransformers/#adding-ats) are tied to the specified access transformer using the `[[accessTransformers]]` header. This is an [array of tables](https://toml.io/en/v1.0.0#array-of-tables); all key/value properties will be attached to that access transformer until the next header. The access transformer header is optional; however, when specified, all elements are mandatory.
      */
-    @get:Input
+    @get:Nested
     @get:Optional
     abstract val accessTransformers: ListProperty<AccessTransformerSpec>
 
     /**
      * [Mixin Configuration Properties](https://github.com/SpongePowered/Mixin/wiki/Introduction-to-Mixins---The-Mixin-Environment#mixin-configuration-files) are tied to the specified mixin config using the `[[mixins]]` header. This is an [array of tables](https://toml.io/en/v1.0.0#array-of-tables); all key/value properties will be attached to that mixin block until the next header. The mixin header is optional; however, when specified, all elements are mandatory.
      */
-    @get:Input
+    @get:Nested
     @get:Optional
     abstract val mixins: ListProperty<MixinSpec>
 
     /**
      * Mods can specify their dependencies, which are checked by NeoForge before loading the mods. These configurations are created using the [array of tables](https://toml.io/en/v1.0.0#array-of-tables) `[[dependencies.<modid>]]`, where `modid` is the identifier of the mod that consumes the dependency.
      */
-    @get:Input
+    @get:Nested
     @get:Optional
     abstract val dependencies: ListProperty<DependencyPropertiesSpec>
 
     /**
      * Arbitrary custom properties.
      */
-    @get:Input
+    @get:Nested
     @get:Optional
     abstract val extraProperties: ListProperty<ExtraPropertiesSpec>
 
     /**
      * Arbitrary custom array properties.
      */
-    @get:Input
+    @get:Nested
     @get:Optional
     abstract val extraArrayProperties: ListProperty<ExtraPropertiesSpec>
 
     init {
-        // these are mandatory on older FML versions, so provide the defaults from modern versions
+        // These are mandatory on older FML versions, so provide the defaults from modern versions.
         modLoader.convention("javafml")
         loaderVersion.convention("*")
         license.convention("All Rights Reserved")
@@ -280,7 +280,7 @@ abstract class NeoForgeModsTomlSpec {
         /**
          * The custom properties.
          */
-        @get:Nested
+        @get:Input
         abstract val properties: MapProperty<String, Any>
     }
 
@@ -314,7 +314,7 @@ abstract class NeoForgeModsTomlSpec {
         /**
          * The custom properties.
          */
-        @get:Nested
+        @get:Input
         abstract val properties: MapProperty<String, Any>
     }
 
@@ -394,12 +394,15 @@ abstract class NeoForgeModsTomlSpec {
     fun dependency(modId: String, action: Action<DependencySpec>) {
         val entry = objects.newInstance(DependencyPropertiesSpec::class.java).also {
             it.modId.set(modId)
-            action.execute(it.properties)
+            action.execute(it.properties.get())
         }
         dependencies.add(entry)
     }
 
     abstract class DependencyPropertiesSpec {
+        @get:Inject
+        abstract val objects: ObjectFactory
+
         /**
          * The identifier of the mod that consumes this dependency.
          */
@@ -410,7 +413,11 @@ abstract class NeoForgeModsTomlSpec {
          * The dependency, which is checked by NeoForge before loading the mods.
          */
         @get:Nested
-        abstract val properties: DependencySpec
+        abstract val properties: Property<DependencySpec>
+
+        init {
+            properties.convention(objects.newInstance(DependencySpec::class.java))
+        }
     }
 
     abstract class DependencySpec {
@@ -572,7 +579,7 @@ abstract class NeoForgeModsTomlSpec {
         /**
          * The custom properties.
          */
-        @get:Nested
+        @get:Input
         abstract val properties: MapProperty<String, Any>
     }
 }

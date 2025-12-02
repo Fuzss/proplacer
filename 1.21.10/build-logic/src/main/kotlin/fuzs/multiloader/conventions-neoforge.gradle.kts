@@ -104,7 +104,7 @@ tasks.named<ProcessResources>("processResources") {
 val refreshUpdateJson = tasks.register("refreshUpdateJson") {
     val projectResourcesProperty = providers.gradleProperty("fuzs.multiloader.project.resources")
     val file = File(projectResourcesProperty.get(), "update/${mod.id}.json")
-    val homepage = metadata.links.firstOrNull { it.name == LinkProvider.GITHUB }
+    val homepage = metadata.links.firstOrNull { it.name == LinkProvider.MODRINTH }
         ?.url()
     val minecraftVersion = versionCatalog.findVersion("minecraft").get()
     val modVersion = mod.version
