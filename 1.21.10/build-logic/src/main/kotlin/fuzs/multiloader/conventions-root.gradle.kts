@@ -4,11 +4,14 @@ import fuzs.multiloader.discord.ChangelogSectionType
 import fuzs.multiloader.discord.DiscordWebhookTask
 import fuzs.multiloader.discord.MessageFlags
 import fuzs.multiloader.metadata.LinkProvider
+import fuzs.multiloader.metadata.ModLoaderProvider
 import fuzs.multiloader.metadata.loadMetadata
 import fuzs.multiloader.task.IncrementBuildNumber
 import kotlinx.serialization.json.Json
 import metadata
 import mod
+import platformProjects
+import projectPlatform
 import versionCatalog
 import java.time.Instant
 
@@ -130,4 +133,68 @@ tasks.register<DiscordWebhookTask>("sendDiscordWebhook") {
             }
         }
     }
+}
+
+tasks.register("root-build") {
+    group = "multiloader/build"
+    dependsOn(project.subprojects.map { it.tasks.named("build") })
+}
+
+tasks.register("root-clean") {
+    group = "multiloader/build"
+    dependsOn(project.subprojects.map { it.tasks.named("clean") })
+}
+
+tasks.register("root-publish") {
+    group = "multiloader/publish"
+    dependsOn(project.subprojects.map { it.tasks.named("publishMavenJavaPublicationToFuzsModResourcesRepository") })
+}
+
+tasks.register("root-curseforge") {
+    group = "multiloader/remote"
+    dependsOn(project.platformProjects.map { it.tasks.named("publishCurseforge") })
+}
+
+tasks.register("root-discord") {
+    group = "multiloader/remote"
+    dependsOn(tasks.named("sendDiscordWebhook"))
+}
+
+tasks.register("root-fabric") {
+    group = "multiloader/remote"
+    dependsOn(
+        project.subprojects
+            .filter { it.projectPlatform == ModLoaderProvider.FABRIC }
+            .map { it.tasks.named("publishMods") }
+    )
+}
+
+tasks.register("root-github") {
+    group = "multiloader/remote"
+    dependsOn(project.platformProjects.map { it.tasks.named("publishGithub") })
+}
+
+tasks.register("root-modrinth") {
+    group = "multiloader/remote"
+    dependsOn(project.platformProjects.map { it.tasks.named("publishModrinth") })
+}
+
+tasks.register("root-neoforge") {
+    group = "multiloader/remote"
+    dependsOn(
+        project.subprojects
+            .filter { it.projectPlatform == ModLoaderProvider.NEOFORGE }
+            .map { it.tasks.named("publishMods") }
+    )
+}
+
+tasks.register("root-root") {
+    group = "multiloader/remote"
+    dependsOn(project.platformProjects.map { it.tasks.named("publishMods") })
+    dependsOn(tasks.named("sendDiscordWebhook"))
+}
+
+tasks.register("root-sources") {
+    group = "multiloader/setup"
+    dependsOn(project.subprojects.map { it.tasks.named("genSources") })
 }

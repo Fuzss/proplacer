@@ -1,5 +1,6 @@
 package fuzs.multiloader
 
+import commonProject
 import fuzs.multiloader.metadata.LinkProvider
 import fuzs.multiloader.neoforge.setupModsTomlTask
 import fuzs.multiloader.neoforge.toml.NeoForgeModsTomlTask
@@ -10,7 +11,6 @@ import metadata
 import mod
 import net.fabricmc.loom.task.RemapJarTask
 import versionCatalog
-import kotlin.jvm.java
 
 plugins {
     id("dev.architectury.loom")
@@ -18,7 +18,7 @@ plugins {
 }
 
 loom {
-    accessWidenerPath.set(project(":Common").loom.accessWidenerPath)
+    accessWidenerPath.set(project.commonProject.loom.accessWidenerPath)
 
     runs {
         configureEach {
@@ -56,11 +56,11 @@ loom {
             programArgs("--all", "--mod", mod.id)
             programArgs(
                 "--existing",
-                project(":Common").file("src/main/resources").absolutePath
+                project.commonProject.file("src/main/resources").absolutePath
             )
             programArgs(
                 "--output",
-                project(":Common").file("src/generated/resources").absolutePath
+                project.commonProject.file("src/generated/resources").absolutePath
             )
         }
     }
@@ -129,4 +129,11 @@ val refreshUpdateJson = tasks.register("refreshUpdateJson") {
 
 tasks.withType(PublishModTask::class.java).configureEach {
     finalizedBy(refreshUpdateJson)
+}
+
+tasks.register("${project.name.lowercase()}-data") {
+    group = "multiloader/run"
+    val task = tasks.named("runData")
+    description = task.get().description
+    dependsOn(task)
 }

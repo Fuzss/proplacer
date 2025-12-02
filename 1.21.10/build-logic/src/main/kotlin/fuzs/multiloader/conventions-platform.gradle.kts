@@ -1,5 +1,6 @@
 package fuzs.multiloader
 
+import commonProject
 import externalMods
 import fuzs.multiloader.metadata.DependencyType
 import fuzs.multiloader.metadata.LinkProvider
@@ -27,8 +28,8 @@ configurations {
 }
 
 dependencies {
-    add("commonJava", project(mapOf("path" to ":Common", "configuration" to "commonJava")))
-    add("commonResources", project(mapOf("path" to ":Common", "configuration" to "commonResources")))
+    add("commonJava", project(mapOf("path" to project.commonProject.path, "configuration" to "commonJava")))
+    add("commonResources", project(mapOf("path" to project.commonProject.path, "configuration" to "commonResources")))
 }
 
 tasks.named<JavaCompile>("compileJava") {
@@ -49,8 +50,8 @@ tasks.named<JavaCompile>("compileJava") {
 tasks.named<ProcessResources>("processResources") {
     dependsOn(configurations.named("commonResources"))
     from(configurations.named("commonResources"))
-    dependsOn(project(":Common").tasks.named<ProcessResources>("processResources"))
-    from(project(":Common").layout.buildDirectory.dir("generated/resources")) {
+    dependsOn(project.commonProject.tasks.named<ProcessResources>("processResources"))
+    from(project.commonProject.layout.buildDirectory.dir("generated/resources")) {
         exclude("architectury.common.json")
     }
 }
@@ -167,4 +168,39 @@ publishMods {
             }
         }
     }
+}
+
+tasks.register("${project.name.lowercase()}-client") {
+    group = "multiloader/run"
+    val task = tasks.named("runClient")
+    description = task.get().description
+    dependsOn(task)
+}
+
+tasks.register("${project.name.lowercase()}-server") {
+    group = "multiloader/run"
+    val task = tasks.named("runServer")
+    description = task.get().description
+    dependsOn(task)
+}
+
+tasks.register("${project.name.lowercase()}-curseforge") {
+    group = "multiloader/remote"
+    val task = tasks.named("publishCurseforge")
+    description = task.get().description
+    dependsOn(task)
+}
+
+tasks.register("${project.name.lowercase()}-github") {
+    group = "multiloader/remote"
+    val task = tasks.named("publishGithub")
+    description = task.get().description
+    dependsOn(task)
+}
+
+tasks.register("${project.name.lowercase()}-modrinth") {
+    group = "multiloader/remote"
+    val task = tasks.named("publishModrinth")
+    description = task.get().description
+    dependsOn(task)
 }

@@ -3,6 +3,7 @@ import kotlinx.serialization.json.Json
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalog
 import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.getByType
 
 // Expose the libs version catalog
@@ -33,3 +34,19 @@ val Project.metadata: ModMetadata
 // Expose the mod entry from metadata
 val Project.mod: ModEntry
     get() = metadata.mod
+
+// Load the Architectury Loom platform property
+val Project.projectPlatform: ModLoaderProvider
+    get() = if (extra.has("loom.platform")) {
+        ModLoaderProvider.valueOf(extra["loom.platform"]!!.toString().uppercase())
+    } else {
+        ModLoaderProvider.COMMON
+    }
+
+// Get the Common project from the Loom property
+val Project.commonProject: Project
+    get() = rootProject.subprojects.firstOrNull { !it.projectPlatform.platform }!!
+
+// Get the platform projects from the Loom property
+val Project.platformProjects: List<Project>
+    get() = rootProject.subprojects.filter { it.projectPlatform.platform }

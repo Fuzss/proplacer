@@ -16,6 +16,8 @@ loom {
 
 dependencies {
     // TODO use version catalog
+    // Using `loaderLibraries` is necessary here.
+    // This is so that Mixin is properly added to the jar MANIFEST in net.fabricmc.loom.task.service.JarManifestService.getMixinVersion().
     loaderLibraries("net.fabricmc:sponge-mixin:0.16.5+mixin.0.8.7")
     loaderLibraries(versionCatalog.findLibrary("mixinextras.common").get())
 }

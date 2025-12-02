@@ -8,6 +8,7 @@ import metadata
 import mod
 import net.fabricmc.loom.LoomGradlePlugin
 import net.fabricmc.loom.task.RemapJarTask
+import projectPlatform
 import versionCatalog
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -381,8 +382,8 @@ val generateMixinConfig = tasks.register<MixinConfigJsonTask>("generateMixinConf
     outputFile.set(layout.buildDirectory.file("generated/resources/${mod.id}.${project.name.lowercase()}.mixins.json"))
 
     json {
-        val platform = if (project.extra.has("loom.platform")) project.extra["loom.platform"] else null
-        mixinPackage.set("${project.group}.${platform?.let { "${it}." }.orEmpty()}mixin")
+        val platform = project.projectPlatform.takeIf { it.platform }
+        mixinPackage.set("${project.group}.${platform?.let { "${it.name.lowercase()}." }.orEmpty()}mixin")
         minVersion.set("0.8")
         required.set(true)
         compatibilityLevel.set("JAVA_${versionCatalog.findVersion("java").get().requiredVersion}")
@@ -432,4 +433,32 @@ val copyDevelopmentJar = tasks.register<Copy>("copyDevelopmentJar") {
 
 tasks.named("build") {
     finalizedBy(copyDevelopmentJar)
+}
+
+tasks.register("${project.name.lowercase()}-build") {
+    group = "multiloader/build"
+    val task = tasks.named("build")
+    description = task.get().description
+    dependsOn(task)
+}
+
+tasks.register("${project.name.lowercase()}-clean") {
+    group = "multiloader/build"
+    val task = tasks.named("clean")
+    description = task.get().description
+    dependsOn(task)
+}
+
+tasks.register("${project.name.lowercase()}-publish") {
+    group = "multiloader/publish"
+    val task = tasks.named("publishMavenJavaPublicationToFuzsModResourcesRepository")
+    description = task.get().description
+    dependsOn(task)
+}
+
+tasks.register("${project.name.lowercase()}-sources") {
+    group = "multiloader/setup"
+    val task = tasks.named("genSources")
+    description = task.get().description
+    dependsOn(task)
 }

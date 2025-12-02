@@ -1,10 +1,10 @@
 package fuzs.multiloader
 
+import commonProject
 import fuzs.multiloader.fabric.setupModJsonTask
 import mod
 import net.fabricmc.loom.task.FabricModJsonV1Task
 import net.fabricmc.loom.task.RemapJarTask
-import org.gradle.kotlin.dsl.named
 import versionCatalog
 
 plugins {
@@ -13,7 +13,7 @@ plugins {
 }
 
 loom {
-    accessWidenerPath.set(project(":Common").loom.accessWidenerPath)
+    accessWidenerPath.set(project.commonProject.loom.accessWidenerPath)
 
     runs {
         configureEach {
