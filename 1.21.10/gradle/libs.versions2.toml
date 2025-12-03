@@ -1,0 +1,22 @@
+[versions]
+
+architectury-loom = "1.13-SNAPSHOT"
+foojay-resolver-convention = "1.0.0"
+java = "21"
+kotlin = "2.2.0"
+kotlinx-serialization-json = "1.9.0"
+ktoml = "0.7.0"
+mod-publish-plugin = "1.1.0"
+
+[libraries]
+
+architectury-loom = { module = "dev.architectury.loom:dev.architectury.loom.gradle.plugin", version.ref = "architectury-loom" }
+foojay-resolver-convention = { module = "org.gradle.toolchains.foojay-resolver-convention:org.gradle.toolchains.foojay-resolver-convention.gradle.plugin", version.ref = "foojay-resolver-convention" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
+ktoml = { module = "com.akuleshov7:ktoml-core", version.ref = "ktoml" }
+mod-publish-plugin = { module = "me.modmuss50.mod-publish-plugin:me.modmuss50.mod-publish-plugin.gradle.plugin", version.ref = "mod-publish-plugin" }
+
+[plugins]
+
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

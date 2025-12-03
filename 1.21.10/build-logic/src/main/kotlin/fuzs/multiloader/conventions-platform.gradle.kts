@@ -14,7 +14,6 @@ import versionCatalog
 import java.io.FileNotFoundException
 
 plugins {
-    id("dev.architectury.loom")
     id("fuzs.multiloader.conventions-core")
 }
 
@@ -92,78 +91,84 @@ tasks.withType<PublishModTask>().configureEach {
 }
 
 publishMods {
+    val changelogFile = file("../CHANGELOG.md")
+    val changelogText = changelogFile.readText()
+
     val remapJar = tasks.named<RemapJarTask>("remapJar")
     file.set(remapJar.get().archiveFile)
 
-    val changelogFile = file("../CHANGELOG.md")
-    val changelogText = changelogFile.readText()
     val minecraftVersion = versionCatalog.findVersion("minecraft").get().requiredVersion
     displayName.set("[${name.uppercase()}] [$minecraftVersion] ${base.archivesName.get()} v${mod.version}")
+
     type.set(STABLE)
     version.set(mod.version)
     modLoaders.add(name.lowercase())
-    dryRun.set(true)
+
+    val projectDebug = providers.gradleProperty("project.debug")
+    dryRun.set(projectDebug.orNull.toBoolean())
 
     for (link in metadata.links) {
-        val uploadTokenProperty =
+        val remoteToken =
             providers.gradleProperty("fuzs.multiloader.remote.${link.name.name.lowercase()}.token")
 
-        when (link.name) {
-            LinkProvider.CURSEFORGE -> {
-                curseforge {
-                    accessToken.set(uploadTokenProperty)
-                    projectId.set(link.id)
-                    minecraftVersions.add(minecraftVersion)
-                    changelog.set(changelogText)
+        if (remoteToken.isPresent) {
+            when (link.name) {
+                LinkProvider.CURSEFORGE -> {
+                    curseforge {
+                        accessToken.set(remoteToken)
+                        projectId.set(link.id)
+                        minecraftVersions.add(minecraftVersion)
+                        changelog.set(changelogText)
 
-                    for (entry in metadata.dependencies) {
-                        externalMods.mods[entry.name]?.links?.firstOrNull { it.name == link.name }?.slug?.let {
-                            when (entry.type) {
-                                DependencyType.REQUIRED -> requires(it)
-                                DependencyType.EMBEDDED -> embeds(it)
-                                DependencyType.OPTIONAL -> optional(it)
-                                DependencyType.UNSUPPORTED -> Unit
-                            }
-                        } ?: println("Unable to link dependency: $entry")
+                        for (entry in metadata.dependencies) {
+                            externalMods.mods[entry.name]?.links?.firstOrNull { it.name == link.name }?.slug?.let {
+                                when (entry.type) {
+                                    DependencyType.REQUIRED -> requires(it)
+                                    DependencyType.EMBEDDED -> embeds(it)
+                                    DependencyType.OPTIONAL -> optional(it)
+                                    DependencyType.UNSUPPORTED -> Unit
+                                }
+                            } ?: println("Unable to link dependency: $entry")
+                        }
                     }
                 }
-            }
 
-            LinkProvider.MODRINTH -> {
-                modrinth {
-                    accessToken.set(uploadTokenProperty)
-                    projectId.set(link.id)
-                    minecraftVersions.add(minecraftVersion)
-                    changelog.set(changelogText)
+                LinkProvider.MODRINTH -> {
+                    modrinth {
+                        accessToken.set(remoteToken)
+                        projectId.set(link.id)
+                        minecraftVersions.add(minecraftVersion)
+                        changelog.set(changelogText)
 
-                    for (entry in metadata.dependencies) {
-                        externalMods.mods[entry.name]?.links?.firstOrNull { it.name == link.name }?.slug?.let {
-                            when (entry.type) {
-                                DependencyType.REQUIRED -> requires(it)
-                                DependencyType.EMBEDDED -> embeds(it)
-                                DependencyType.OPTIONAL -> optional(it)
-                                DependencyType.UNSUPPORTED -> Unit
-                            }
-                        } ?: println("Unable to link dependency: $entry")
+                        for (entry in metadata.dependencies) {
+                            externalMods.mods[entry.name]?.links?.firstOrNull { it.name == link.name }?.slug?.let {
+                                when (entry.type) {
+                                    DependencyType.REQUIRED -> requires(it)
+                                    DependencyType.EMBEDDED -> embeds(it)
+                                    DependencyType.OPTIONAL -> optional(it)
+                                    DependencyType.UNSUPPORTED -> Unit
+                                }
+                            } ?: println("Unable to link dependency: $entry")
+                        }
                     }
                 }
-            }
 
-            LinkProvider.GITHUB -> {
-                github {
-                    accessToken.set(uploadTokenProperty)
-                    repository.set(link.url().replace("https://github.com/", ""))
-                    commitish.set("main")
-                    tagName.set("v${mod.version}-mc$minecraftVersion/${name.lowercase()}")
+                LinkProvider.GITHUB -> {
+                    github {
+                        accessToken.set(remoteToken)
+                        repository.set(link.url().replace("https://github.com/", ""))
+                        commitish.set("main")
+                        tagName.set("v${mod.version}-mc$minecraftVersion/${name.lowercase()}")
 
-                    // Only include the relevant changelog section.
-                    val changelogSections = changelogText.split(Regex("(?m)^## \\["), limit = 3)
-                    changelog.set("## " + changelogSections.getOrNull(1)?.trim())
+                        // Only include the relevant changelog section.
+                        val changelogSections = changelogText.split(Regex("(?m)^## \\["), limit = 3)
+                        changelog.set("## " + changelogSections.getOrNull(1)?.trim())
 
-                    val sourcesJar = tasks.named<Jar>("sourcesJar")
-                    additionalFiles.from(sourcesJar.get().archiveFile)
-                    val javadocJar = tasks.named<Jar>("javadocJar")
-                    additionalFiles.from(javadocJar.get().archiveFile)
+                        val sourcesJar = tasks.named<Jar>("sourcesJar")
+                        additionalFiles.from(sourcesJar.get().archiveFile)
+                        val javadocJar = tasks.named<Jar>("javadocJar")
+                        additionalFiles.from(javadocJar.get().archiveFile)
+                    }
                 }
             }
         }
@@ -184,23 +189,29 @@ tasks.register("${project.name.lowercase()}-server") {
     dependsOn(task)
 }
 
-tasks.register("${project.name.lowercase()}-curseforge") {
-    group = "multiloader/remote"
-    val task = tasks.named("publishCurseforge")
-    description = task.get().description
-    dependsOn(task)
+if (metadata.links.firstOrNull { it.name == LinkProvider.CURSEFORGE } != null) {
+    tasks.register("${project.name.lowercase()}-curseforge") {
+        group = "multiloader/remote"
+        val task = tasks.named("publishCurseforge")
+        description = task.get().description
+        dependsOn(task)
+    }
 }
 
-tasks.register("${project.name.lowercase()}-github") {
-    group = "multiloader/remote"
-    val task = tasks.named("publishGithub")
-    description = task.get().description
-    dependsOn(task)
+if (metadata.links.firstOrNull { it.name == LinkProvider.GITHUB } != null) {
+    tasks.register("${project.name.lowercase()}-github") {
+        group = "multiloader/remote"
+        val task = tasks.named("publishGithub")
+        description = task.get().description
+        dependsOn(task)
+    }
 }
 
-tasks.register("${project.name.lowercase()}-modrinth") {
-    group = "multiloader/remote"
-    val task = tasks.named("publishModrinth")
-    description = task.get().description
-    dependsOn(task)
+if (metadata.links.firstOrNull { it.name == LinkProvider.MODRINTH } != null) {
+    tasks.register("${project.name.lowercase()}-modrinth") {
+        group = "multiloader/remote"
+        val task = tasks.named("publishModrinth")
+        description = task.get().description
+        dependsOn(task)
+    }
 }

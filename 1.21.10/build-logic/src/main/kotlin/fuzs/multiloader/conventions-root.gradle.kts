@@ -65,19 +65,20 @@ fun readChangelogFields(): Map<String, String> {
 }
 
 tasks.register<DiscordWebhookTask>("sendDiscordWebhook") {
-    val discordChannelProperty = providers.gradleProperty("fuzs.multiloader.remote.discord.channel")
-    val discordTokenProperty = providers.gradleProperty("fuzs.multiloader.remote.discord.token")
-    val remoteResourcesProperty = providers.gradleProperty("fuzs.multiloader.remote.resources")
+    val discordChannel = providers.gradleProperty("fuzs.multiloader.remote.discord.channel")
+    val discordToken = providers.gradleProperty("fuzs.multiloader.remote.discord.token")
+    onlyIf { discordChannel.isPresent && discordToken.isPresent }
 
+    val projectDebug = providers.gradleProperty("project.debug")
     val minecraftVersion = versionCatalog.findVersion("minecraft").get()
 
     payload {
-        channel.set(discordChannelProperty.get())
-        token.set(discordTokenProperty.get())
+        channel.set(discordChannel.get())
+        token.set(discordToken.get())
         val epochSeconds = System.currentTimeMillis() / 1000
         content.set("<t:$epochSeconds:R>")
         flags.set(MessageFlags.SUPPRESS_NOTIFICATIONS)
-        debug.set(true)
+        debug.set(projectDebug.orNull.toBoolean())
 
         embed {
             title.set("[$minecraftVersion] ${mod.name} v${mod.version}")
@@ -90,12 +91,12 @@ tasks.register<DiscordWebhookTask>("sendDiscordWebhook") {
 
             val footerValues = listOf(mod.name, "v${mod.version}", minecraftVersion)
             footer(footerValues.joinToString(" \u2022 "))
-            image("${remoteResourcesProperty.get()}/pages/data/${mod.id}/banner.png")
-            thumbnail("${remoteResourcesProperty.get()}/pages/data/${mod.id}/logo.png")
+            image("https://raw.githubusercontent.com/Fuzss/modresources/main/pages/data/${mod.id}/banner.png")
+            thumbnail("https://raw.githubusercontent.com/Fuzss/modresources/main/pages/data/${mod.id}/logo.png")
 
             author("Fuzs") {
                 url.set("https://modrinth.com/user/Fuzs")
-                iconUrl.set("${remoteResourcesProperty.get()}/pages/commons/avatar.png")
+                iconUrl.set("https://raw.githubusercontent.com/Fuzss/modresources/main/pages/commons/avatar.png")
             }
 
             readChangelogFields().forEach { field(it.key, it.value) }
@@ -150,51 +151,65 @@ tasks.register("root-publish") {
     dependsOn(project.subprojects.map { it.tasks.named("publishMavenJavaPublicationToFuzsModResourcesRepository") })
 }
 
-tasks.register("root-curseforge") {
-    group = "multiloader/remote"
-    dependsOn(project.platformProjects.map { it.tasks.named("publishCurseforge") })
+if (metadata.links.firstOrNull { it.name == LinkProvider.CURSEFORGE } != null) {
+    tasks.register("root-curseforge") {
+        group = "multiloader/remote"
+        dependsOn(project.platformProjects.map { it.tasks.named("publishCurseforge") })
+    }
 }
 
-tasks.register("root-discord") {
-    group = "multiloader/remote"
-    dependsOn(tasks.named("sendDiscordWebhook"))
+if (metadata.links.firstOrNull { it.name == LinkProvider.GITHUB } != null) {
+    tasks.register("root-github") {
+        group = "multiloader/remote"
+        dependsOn(project.platformProjects.map { it.tasks.named("publishGithub") })
+    }
 }
 
-tasks.register("root-fabric") {
-    group = "multiloader/remote"
-    dependsOn(
-        project.subprojects
-            .filter { it.projectPlatform == ModLoaderProvider.FABRIC }
-            .map { it.tasks.named("publishMods") }
-    )
+if (metadata.links.firstOrNull { it.name == LinkProvider.MODRINTH } != null) {
+    tasks.register("root-modrinth") {
+        group = "multiloader/remote"
+        dependsOn(project.platformProjects.map { it.tasks.named("publishModrinth") })
+    }
 }
 
-tasks.register("root-github") {
-    group = "multiloader/remote"
-    dependsOn(project.platformProjects.map { it.tasks.named("publishGithub") })
+if (metadata.links.isNotEmpty()) {
+    tasks.register("root-discord") {
+        group = "multiloader/remote"
+        dependsOn(tasks.named("sendDiscordWebhook"))
+    }
 }
 
-tasks.register("root-modrinth") {
-    group = "multiloader/remote"
-    dependsOn(project.platformProjects.map { it.tasks.named("publishModrinth") })
+if (metadata.links.isNotEmpty()) {
+    tasks.register("root-fabric") {
+        group = "multiloader/remote"
+        dependsOn(
+            project.subprojects
+                .filter { it.projectPlatform == ModLoaderProvider.FABRIC }
+                .map { it.tasks.named("publishMods") }
+        )
+    }
 }
 
-tasks.register("root-neoforge") {
-    group = "multiloader/remote"
-    dependsOn(
-        project.subprojects
-            .filter { it.projectPlatform == ModLoaderProvider.NEOFORGE }
-            .map { it.tasks.named("publishMods") }
-    )
+if (metadata.links.isNotEmpty()) {
+    tasks.register("root-neoforge") {
+        group = "multiloader/remote"
+        dependsOn(
+            project.subprojects
+                .filter { it.projectPlatform == ModLoaderProvider.NEOFORGE }
+                .map { it.tasks.named("publishMods") }
+        )
+    }
 }
 
-tasks.register("root-root") {
-    group = "multiloader/remote"
-    dependsOn(project.platformProjects.map { it.tasks.named("publishMods") })
-    dependsOn(tasks.named("sendDiscordWebhook"))
+if (metadata.links.isNotEmpty()) {
+    tasks.register("root-root") {
+        group = "multiloader/remote"
+        dependsOn(project.platformProjects.map { it.tasks.named("publishMods") })
+        dependsOn(tasks.named("sendDiscordWebhook"))
+    }
 }
 
 tasks.register("root-sources") {
     group = "multiloader/setup"
-    dependsOn(project.subprojects.map { it.tasks.named("genSources") })
+    dependsOn(project.subprojects.map { it.tasks.named("genSourcesWithVineflower") })
 }

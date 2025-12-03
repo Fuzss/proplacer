@@ -8,7 +8,6 @@ import net.fabricmc.loom.task.RemapJarTask
 import versionCatalog
 
 plugins {
-    id("dev.architectury.loom")
     id("fuzs.multiloader.conventions-platform")
 }
 

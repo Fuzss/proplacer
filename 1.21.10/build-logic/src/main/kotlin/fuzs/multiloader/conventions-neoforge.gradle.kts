@@ -13,7 +13,6 @@ import net.fabricmc.loom.task.RemapJarTask
 import versionCatalog
 
 plugins {
-    id("dev.architectury.loom")
     id("fuzs.multiloader.conventions-platform")
 }
 
@@ -102,14 +101,14 @@ tasks.named<ProcessResources>("processResources") {
 }
 
 val refreshUpdateJson = tasks.register("refreshUpdateJson") {
-    val projectResourcesProperty = providers.gradleProperty("fuzs.multiloader.project.resources")
-    val file = File(projectResourcesProperty.get(), "update/${mod.id}.json")
+    val projectResources = providers.gradleProperty("fuzs.multiloader.project.resources")
+    val file = File(projectResources.get(), "update/${mod.id}.json")
     val homepage = metadata.links.firstOrNull { it.name == LinkProvider.MODRINTH }
         ?.url()
     val minecraftVersion = versionCatalog.findVersion("minecraft").get()
     val modVersion = mod.version
 
-    onlyIf { projectResourcesProperty.isPresent && homepage != null }
+    onlyIf { projectResources.isPresent && homepage != null }
 
     doLast {
         val json = Json { prettyPrint = true }

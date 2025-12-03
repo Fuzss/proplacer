@@ -15,11 +15,11 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 plugins {
-    id("java")
-    id("java-library")
-    id("maven-publish")
-    id("signing")
-    id("idea")
+    `java`
+    `java-library`
+    `maven-publish`
+    `signing`
+    `idea`
     id("dev.architectury.loom")
     id("me.modmuss50.mod-publish-plugin")
 }
@@ -168,28 +168,6 @@ java {
     withJavadocJar()
 }
 
-tasks.withType<JavaCompile>().configureEach {
-    // Ensure that the encoding is set to UTF-8, no matter what the system default is.
-    // This fixes some edge cases with special characters not displaying correctly.
-    // See: http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
-    // If Javadoc is generated, this must be specified in that task too.
-    options.encoding = "UTF-8"
-    options.release.set(versionCatalog.findVersion("java").get().requiredVersion.toInt())
-    // Disables general compiler warnings.
-    options.isWarnings = false
-    // Enables compiler messages for uses of deprecated methods or classes.
-    options.isDeprecation = true
-    // Adds the unchecked warning flag so the compiler reports raw type and unsafe cast situations.
-    options.compilerArgs.add("-Xlint:unchecked")
-}
-
-tasks.withType<Javadoc>().configureEach {
-    // Workaround cast for: https://github.com/gradle/gradle/issues/7038
-    val standardJavadocDocletOptions = options as StandardJavadocDocletOptions
-    // Prevent Java 8's strict doclint for Javadocs from failing builds.
-    standardJavadocDocletOptions.addStringOption("Xdoclint:none", "-quiet")
-}
-
 tasks.withType<Jar>().configureEach {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
@@ -232,10 +210,26 @@ tasks.withType<Jar>().configureEach {
     group = "jar"
 }
 
-tasks.withType<GenerateModuleMetadata>().configureEach {
-    // Disables Gradle's custom module metadata from being published to maven.
-    // The metadata includes mapped dependencies which are not reasonably consumable by other mod developers.
-    enabled = false
+tasks.withType<JavaCompile>().configureEach {
+    // Ensure that the encoding is set to UTF-8, no matter what the system default is.
+    // This fixes some edge cases with special characters not displaying correctly.
+    // See: http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
+    // If Javadoc is generated, this must be specified in that task too.
+    options.encoding = "UTF-8"
+    options.release.set(versionCatalog.findVersion("java").get().requiredVersion.toInt())
+    // Disables general compiler warnings.
+    options.isWarnings = false
+    // Enables compiler messages for uses of deprecated methods or classes.
+    options.isDeprecation = true
+    // Adds the unchecked warning flag so the compiler reports raw type and unsafe cast situations.
+    options.compilerArgs.add("-Xlint:unchecked")
+}
+
+tasks.withType<Javadoc>().configureEach {
+    // Workaround cast for: https://github.com/gradle/gradle/issues/7038
+    val standardJavadocDocletOptions = options as StandardJavadocDocletOptions
+    // Prevent Java 8's strict doclint for Javadocs from failing builds.
+    standardJavadocDocletOptions.addStringOption("Xdoclint:none", "-quiet")
 }
 
 tasks.withType<AbstractArchiveTask>().configureEach {
@@ -243,6 +237,12 @@ tasks.withType<AbstractArchiveTask>().configureEach {
     // https://docs.gradle.org/current/userguide/working_with_files.html#sec:reproducible_archives
     isPreserveFileTimestamps = false
     isReproducibleFileOrder = true
+}
+
+tasks.withType<GenerateModuleMetadata>().configureEach {
+    // Disables Gradle's custom module metadata from being published to maven.
+    // The metadata includes mapped dependencies which are not reasonably consumable by other mod developers.
+    enabled = false
 }
 
 idea {
@@ -314,6 +314,7 @@ publishing {
         create<MavenPublication>("mavenJava") {
             artifactId = "${mod.id}-${project.name.lowercase()}"
             version = mod.version
+            groupId = mod.group
 
             from(components["java"])
 
@@ -362,14 +363,14 @@ publishing {
     }
 
     repositories {
-        maven {
-            name = "FuzsModResources"
-            url = uri(
-                project.providers.gradleProperty("modResources")
-                    .map { "$it/maven" }
-                    .orElse(System.getenv("local_maven"))
-            )
-        }
+        project.providers.gradleProperty("fuzs.multiloader.project.resources").orNull
+            ?.let { "$it/maven" }
+            ?.let {
+                maven {
+                    name = "FuzsModResources"
+                    url = uri(it)
+                }
+            }
     }
 }
 
@@ -408,27 +409,30 @@ tasks.named<ProcessResources>("processResources") {
 }
 
 val copyDevelopmentJar = tasks.register<Copy>("copyDevelopmentJar") {
-    val buildOutputProperty = providers.gradleProperty("fuzs.multiloader.build.output")
-    onlyIf { buildOutputProperty.isPresent }
+    val buildOutput = providers.gradleProperty("fuzs.multiloader.build.output")
+    onlyIf { buildOutput.isPresent }
 
     val incrementBuildNumber = rootProject.tasks.named<IncrementBuildNumber>("incrementBuildNumber")
     dependsOn(incrementBuildNumber)
 
     val remapJar = tasks.named<RemapJarTask>("remapJar")
     dependsOn(remapJar)
-    from(remapJar.flatMap { it.archiveFile })
-    into(buildOutputProperty.get())
 
-    // This runs at configuration time before the properties file is updated.
-    // But that is fine as the value from the last run is still unique.
-    val buildPropertiesFile = rootProject.layout.buildDirectory.file("build.properties").get().asFile
-    val projectBuildNumber = Properties().apply {
-        if (buildPropertiesFile.exists()) load(buildPropertiesFile.inputStream())
-    }.getProperty("project.build") ?: "1"
-    val oldValue = "v${mod.version}-mc"
-    val newValue = "v${mod.version}-dev.${projectBuildNumber}-mc"
+    if (buildOutput.isPresent) {
+        from(remapJar.flatMap { it.archiveFile })
+        into(buildOutput.get())
 
-    rename { it.replace(oldValue, newValue) }
+        // This runs at configuration time before the properties file is updated.
+        // But that is fine as the value from the last run is still unique.
+        val buildPropertiesFile = rootProject.layout.buildDirectory.file("build.properties").get().asFile
+        val projectBuildNumber = Properties().apply {
+            if (buildPropertiesFile.exists()) load(buildPropertiesFile.inputStream())
+        }.getProperty("project.build") ?: "1"
+        val oldValue = "v${mod.version}-mc"
+        val newValue = "v${mod.version}-dev.${projectBuildNumber}-mc"
+
+        rename { it.replace(oldValue, newValue) }
+    }
 }
 
 tasks.named("build") {
@@ -458,7 +462,7 @@ tasks.register("${project.name.lowercase()}-publish") {
 
 tasks.register("${project.name.lowercase()}-sources") {
     group = "multiloader/setup"
-    val task = tasks.named("genSources")
+    val task = tasks.named("genSourcesWithVineflower")
     description = task.get().description
     dependsOn(task)
 }

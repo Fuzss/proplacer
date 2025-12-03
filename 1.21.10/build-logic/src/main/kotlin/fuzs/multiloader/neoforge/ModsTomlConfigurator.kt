@@ -13,7 +13,6 @@ import kotlin.jvm.optionals.getOrNull
 
 fun NeoForgeModsTomlTask.setupModsTomlTask() {
     val multiLoaderExtension = project.extensions.getByType(MultiLoaderExtension::class.java)
-    val remoteResourcesProperty = project.providers.gradleProperty("fuzs.multiloader.remote.resources")
     outputFile.set(project.layout.buildDirectory.file("generated/resources/META-INF/neoforge.mods.toml"))
 
     toml {
@@ -35,7 +34,7 @@ fun NeoForgeModsTomlTask.setupModsTomlTask() {
                 ?.url()
                 ?.let { displayURL.set(it) }
 
-            updateJSONURL.set("${remoteResourcesProperty.get()}/update/${project.mod.id}.json")
+            updateJSONURL.set("https://raw.githubusercontent.com/Fuzss/modresources/main/update/${project.mod.id}.json")
             multiLoaderExtension.modFile.orNull?.enumExtensions?.orNull?.let { enumExtensions.set(it) }
         }
 
