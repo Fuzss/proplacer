@@ -27,6 +27,7 @@ configurations {
 }
 
 dependencies {
+    compileOnly(project.commonProject)
     add("commonJava", project(mapOf("path" to project.commonProject.path, "configuration" to "commonJava")))
     add("commonResources", project(mapOf("path" to project.commonProject.path, "configuration" to "commonResources")))
 }
