@@ -17,7 +17,7 @@ pluginManagement {
             forRepository {
                 maven {
                     name = "Forge"
-                    url = uri("https://maven.minecraftforge.net/")
+                    url = uri("https://maven.minecraftforge.net")
                 }
             }
             filter {
@@ -25,21 +25,11 @@ pluginManagement {
                 includeGroupAndSubgroups("net.minecraftforge")
             }
         }
-        exclusiveContent {
-            forRepository {
-                maven {
-                    name = "Fuzs Mod Resources"
-                    url = uri("https://raw.githubusercontent.com/Fuzss/modresources/main/maven/")
-                }
-            }
-            filter {
-                @Suppress("UnstableApiUsage")
-                includeGroupAndSubgroups("fuzs.multiloader")
-            }
-        }
     }
+
+    includeBuild("build-logic")
 }
 
 plugins {
-    id("fuzs.multiloader.conventions-settings") version "1.0.0"
+    id("fuzs.multiloader.conventions-settings")
 }
