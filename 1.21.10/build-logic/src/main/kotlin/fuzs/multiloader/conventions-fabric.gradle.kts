@@ -1,15 +1,20 @@
 package fuzs.multiloader
 
 import commonProject
+import expectPlatform
 import fuzs.multiloader.fabric.setupModJsonTask
+import fuzs.multiloader.metadata.ModLoaderProvider
 import mod
 import net.fabricmc.loom.task.FabricModJsonV1Task
 import net.fabricmc.loom.task.RemapJarTask
+import org.gradle.api.internal.tasks.JvmConstants
 import versionCatalog
 
 plugins {
     id("fuzs.multiloader.conventions-platform")
 }
+
+project.expectPlatform(ModLoaderProvider.FABRIC)
 
 loom {
     accessWidenerPath.set(project.commonProject.loom.accessWidenerPath)
@@ -77,6 +82,6 @@ val generateModJson = tasks.register<FabricModJsonV1Task>("generateModJson") {
     setupModJsonTask()
 }
 
-tasks.named<ProcessResources>("processResources") {
+tasks.named<ProcessResources>(JvmConstants.PROCESS_RESOURCES_TASK_NAME) {
     dependsOn(generateModJson)
 }

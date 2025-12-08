@@ -1,5 +1,6 @@
 import fuzs.multiloader.metadata.*
 import kotlinx.serialization.json.Json
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalog
 import org.gradle.api.artifacts.VersionCatalogsExtension
@@ -35,13 +36,20 @@ val Project.metadata: ModMetadata
 val Project.mod: ModEntry
     get() = metadata.mod
 
-// Load the Architectury Loom platform property
+// Load the fabric.loom.dontRemap Loom property that disables remapping outputs (useful for the common subproject)
+val Project.dontRemap: Boolean
+    get() = extra.has("fabric.loom.dontRemap") && (extra["fabric.loom.dontRemap"] as? String)?.toBoolean() == true
+
+// Load the loom.platform Architectury Loom property
 val Project.projectPlatform: ModLoaderProvider
-    get() = if (extra.has("loom.platform")) {
-        ModLoaderProvider.valueOf(extra["loom.platform"]!!.toString().uppercase())
-    } else {
-        ModLoaderProvider.COMMON
+    get() = (if (extra.has("loom.platform")) extra["loom.platform"] as? String else null)?.uppercase()
+        ?.let { ModLoaderProvider.valueOf(it) } ?: ModLoaderProvider.COMMON
+
+fun Project.expectPlatform(platform: ModLoaderProvider) {
+    if (platform != project.projectPlatform) {
+        throw GradleException("Mismatched platform: ${project.projectPlatform} != ${platform}, define via loom.platform=${platform} in gradle.properties")
     }
+}
 
 // Get the Common project from the Loom property
 val Project.commonProject: Project

@@ -1,8 +1,6 @@
 package fuzs.multiloader
 
-import fuzs.multiloader.discord.ChangelogSectionType
-import fuzs.multiloader.discord.DiscordWebhookTask
-import fuzs.multiloader.discord.MessageFlags
+import fuzs.multiloader.discord.*
 import fuzs.multiloader.metadata.LinkProvider
 import fuzs.multiloader.metadata.ModLoaderProvider
 import fuzs.multiloader.metadata.loadMetadata
@@ -32,36 +30,11 @@ tasks.register<IncrementBuildNumber>("incrementBuildNumber") {
     outputFile.set(propertiesFile)
 }
 
-fun readChangelogFields(): Map<String, String> {
-    val changelogText = project.file("CHANGELOG.md").readText()
-    // Extract most recent section (everything until next "## " or EOF)
-    val sectionRegex = Regex("""## \[.*?] - \d{4}-\d{2}-\d{2}\r?\n(?s)(.*?)(?=\r?\n## |$)""")
-    val latestSection = sectionRegex.find(changelogText)?.groups?.get(1)?.value?.trim() ?: ""
-    val changelogSections = mutableMapOf<String, String>()
-    val subsectionRegex = Regex("""### (.*?)\r?\n(?s)(.*?)(?=\r?\n### |$)""")
-
-    for (section in subsectionRegex.findAll(latestSection)) {
-        val title = section.groups[1]?.value?.trim() ?: ""
-        val body = section.groups[2]?.value?.trim() ?: ""
-        val emoji = ChangelogSectionType.emojiByName(title)
-        val formattedBody = body.lineSequence()
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .fold(mutableListOf<String>()) { accumulator, line ->
-                if (line.startsWith("- ")) {
-                    accumulator.add(line.replaceFirst("- ", "\u2022 "))
-                } else if (accumulator.isNotEmpty()) {
-                    accumulator[accumulator.lastIndex] = accumulator.last() + " " + line
-                } else {
-                    accumulator.add(line)
-                }
-                accumulator
-            }
-            .joinToString("\n")
-        changelogSections += "$emoji $title" to formattedBody
+tasks.withType<DiscordWebhookTask>().configureEach {
+    val versionString = project.changelogVersion
+    doFirst {
+        verifyChangelogVersion(project.file("CHANGELOG.md"), versionString)
     }
-
-    return changelogSections
 }
 
 tasks.register<DiscordWebhookTask>("sendDiscordWebhook") {
@@ -71,6 +44,7 @@ tasks.register<DiscordWebhookTask>("sendDiscordWebhook") {
 
     val projectDebug = providers.gradleProperty("project.debug")
     val minecraftVersion = versionCatalog.findVersion("minecraft").get()
+    val changelogFile = file("CHANGELOG.md")
 
     payload {
         channel.set(discordChannel.get())
@@ -99,7 +73,7 @@ tasks.register<DiscordWebhookTask>("sendDiscordWebhook") {
                 iconUrl.set("https://raw.githubusercontent.com/Fuzss/modresources/main/pages/commons/avatar.png")
             }
 
-            readChangelogFields().forEach { field(it.key, it.value) }
+            parseChangelogFields(changelogFile).forEach { field(it.key, it.value) }
 
             val downloadLinks = metadata.links.mapNotNull {
                 when (it.name) {
@@ -136,51 +110,51 @@ tasks.register<DiscordWebhookTask>("sendDiscordWebhook") {
     }
 }
 
-tasks.register("root-build") {
+tasks.register("all-build") {
     group = "multiloader/build"
     dependsOn(project.subprojects.map { it.tasks.named("build") })
 }
 
-tasks.register("root-clean") {
+tasks.register("all-clean") {
     group = "multiloader/build"
     dependsOn(project.subprojects.map { it.tasks.named("clean") })
 }
 
-tasks.register("root-publish") {
+tasks.register("all-publish") {
     group = "multiloader/publish"
     dependsOn(project.subprojects.map { it.tasks.named("publishMavenJavaPublicationToFuzsModResourcesRepository") })
 }
 
 if (metadata.links.firstOrNull { it.name == LinkProvider.CURSEFORGE } != null) {
-    tasks.register("root-curseforge") {
+    tasks.register("all-curseforge") {
         group = "multiloader/remote"
         dependsOn(project.platformProjects.map { it.tasks.named("publishCurseforge") })
     }
 }
 
 if (metadata.links.firstOrNull { it.name == LinkProvider.GITHUB } != null) {
-    tasks.register("root-github") {
+    tasks.register("all-github") {
         group = "multiloader/remote"
         dependsOn(project.platformProjects.map { it.tasks.named("publishGithub") })
     }
 }
 
 if (metadata.links.firstOrNull { it.name == LinkProvider.MODRINTH } != null) {
-    tasks.register("root-modrinth") {
+    tasks.register("all-modrinth") {
         group = "multiloader/remote"
         dependsOn(project.platformProjects.map { it.tasks.named("publishModrinth") })
     }
 }
 
 if (metadata.links.isNotEmpty()) {
-    tasks.register("root-discord") {
+    tasks.register("all-discord") {
         group = "multiloader/remote"
         dependsOn(tasks.named("sendDiscordWebhook"))
     }
 }
 
 if (metadata.links.isNotEmpty()) {
-    tasks.register("root-fabric") {
+    tasks.register("fabric-all") {
         group = "multiloader/remote"
         dependsOn(
             project.subprojects
@@ -191,7 +165,7 @@ if (metadata.links.isNotEmpty()) {
 }
 
 if (metadata.links.isNotEmpty()) {
-    tasks.register("root-neoforge") {
+    tasks.register("neoforge-all") {
         group = "multiloader/remote"
         dependsOn(
             project.subprojects
@@ -202,14 +176,14 @@ if (metadata.links.isNotEmpty()) {
 }
 
 if (metadata.links.isNotEmpty()) {
-    tasks.register("root-root") {
+    tasks.register("all-all") {
         group = "multiloader/remote"
         dependsOn(project.platformProjects.map { it.tasks.named("publishMods") })
         dependsOn(tasks.named("sendDiscordWebhook"))
     }
 }
 
-tasks.register("root-sources") {
+tasks.register("all-sources") {
     group = "multiloader/setup"
     dependsOn(project.subprojects.map { it.tasks.named("genSourcesWithVineflower") })
 }

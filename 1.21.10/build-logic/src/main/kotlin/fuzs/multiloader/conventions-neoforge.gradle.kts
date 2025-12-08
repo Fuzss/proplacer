@@ -1,7 +1,10 @@
 package fuzs.multiloader
 
 import commonProject
+import expectPlatform
+import fuzs.multiloader.architectury.ArchitecturyCommonJsonTask
 import fuzs.multiloader.metadata.LinkProvider
+import fuzs.multiloader.metadata.ModLoaderProvider
 import fuzs.multiloader.neoforge.setupModsTomlTask
 import fuzs.multiloader.neoforge.toml.NeoForgeModsTomlTask
 import fuzs.multiloader.neoforge.update.NeoForgeUpdateJson
@@ -10,11 +13,14 @@ import me.modmuss50.mpp.PublishModTask
 import metadata
 import mod
 import net.fabricmc.loom.task.RemapJarTask
+import org.gradle.api.internal.tasks.JvmConstants
 import versionCatalog
 
 plugins {
     id("fuzs.multiloader.conventions-platform")
 }
+
+project.expectPlatform(ModLoaderProvider.NEOFORGE)
 
 loom {
     accessWidenerPath.set(project.commonProject.loom.accessWidenerPath)
@@ -89,15 +95,27 @@ dependencies {
 }
 
 tasks.named<RemapJarTask>("remapJar") {
-    atAccessWideners.add("${mod.id}.accesswidener")
+    atAccessWideners.add(project.commonProject.loom.accessWidenerPath.map { it.asFile.name })
+    // We need to have an access widener in the NeoForge jar for transitive entries to apply in an Architectury Loom setup.
+    // Since we compile on the native loaders, common access widener changes will otherwise not carry over and lead to errors.
+    from(project.commonProject.loom.accessWidenerPath) {
+        into("/META-INF")
+    }
+}
+
+val generateArchitecturyCommonJson = tasks.register<ArchitecturyCommonJsonTask>("generateArchitecturyCommonJson") {
+    outputFile.set(layout.buildDirectory.file("generated/resources/architectury.common.json"))
+    json {
+        accessWidener.set(loom.accessWidenerPath.map { "META-INF/${it.asFile.name}" })
+    }
 }
 
 val generateModsToml = tasks.register<NeoForgeModsTomlTask>("generateModsToml") {
     setupModsTomlTask()
 }
 
-tasks.named<ProcessResources>("processResources") {
-    dependsOn(generateModsToml)
+tasks.named<ProcessResources>(JvmConstants.PROCESS_RESOURCES_TASK_NAME) {
+    dependsOn(generateArchitecturyCommonJson, generateModsToml)
 }
 
 val refreshUpdateJson = tasks.register("refreshUpdateJson") {

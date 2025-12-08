@@ -11,9 +11,9 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-base.archivesName = extra["mod.id"].toString()
-version = extra["mod.version"].toString()
-group = extra["mod.group"].toString()
+base.archivesName = extra["mod.id"] as String
+version = extra["mod.version"] as String
+group = extra["mod.group"] as String
 
 repositories {
     gradlePluginPortal()
@@ -33,7 +33,7 @@ repositories {
         forRepository {
             maven {
                 name = "Forge"
-                url = uri("https://maven.minecraftforge.net")
+                url = uri("https://maven.minecraftforge.net/")
             }
         }
         filter {
@@ -92,8 +92,8 @@ afterEvaluate {
     publishing {
         publications {
             fun populatePomFile(pom: MavenPom) = with(pom) {
-                name.set(extra["mod.name"].toString())
-                description.set(extra["mod.description"].toString())
+                name.set(extra["mod.name"] as String)
+                description.set(extra["mod.description"] as String)
                 project.providers.gradleProperty("distributions.github.slug").orNull
                     ?.let { "https://github.com/Fuzss/$it" }
                     ?.let {
@@ -118,13 +118,13 @@ afterEvaluate {
 
                 licenses {
                     license {
-                        name.set(extra["mod.license"].toString())
-                        url.set("https://spdx.org/licenses/${extra["mod.license"]}.html")
+                        name.set(extra["mod.license"] as String)
+                        url.set("https://spdx.org/licenses/${extra["mod.license"] as String}.html")
                     }
                 }
 
                 developers {
-                    for (author in extra["mod.authors"].toString()
+                    for (author in (extra["mod.authors"] as String)
                         .split(",")
                         .map { it.trim() }
                         .filter { it.isNotEmpty() }) {
@@ -137,15 +137,15 @@ afterEvaluate {
             }
 
             val pluginMaven = getByName("pluginMaven") as MavenPublication
-            pluginMaven.artifactId = extra["mod.id"].toString()
-            pluginMaven.version = extra["mod.version"].toString()
-            pluginMaven.groupId = extra["mod.group"].toString()
+            pluginMaven.artifactId = extra["mod.id"] as String
+            pluginMaven.version = extra["mod.version"] as String
+            pluginMaven.groupId = extra["mod.group"] as String
             pluginMaven.pom { populatePomFile(this) }
 
             create<MavenPublication>("snapshotMaven") {
-                artifactId = extra["mod.id"].toString()
-                version = extra["mod.version"].toString().substringBeforeLast('.') + "-SNAPSHOT"
-                groupId = extra["mod.group"].toString()
+                artifactId = extra["mod.id"] as String
+                version = (extra["mod.version"] as String).substringBeforeLast('.') + "-SNAPSHOT"
+                groupId = extra["mod.group"] as String
                 from(components["java"])
                 pom { populatePomFile(this) }
             }
@@ -164,7 +164,7 @@ afterEvaluate {
     }
 }
 
-tasks.register("${project.name.lowercase().replace(Regex("[^a-zA-Z]"), "")}-publish") {
+tasks.register("${project.name.lowercase().replace(Regex("\\W"), "")}-publish") {
     group = "multiloader/publish"
     val task = project.tasks.named("publishAllPublicationsToFuzsModResourcesRepository")
     description = task.get().description

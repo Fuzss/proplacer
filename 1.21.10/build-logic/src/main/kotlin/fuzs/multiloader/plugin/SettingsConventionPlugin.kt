@@ -11,7 +11,7 @@ class SettingsConventionPlugin : Plugin<Settings> {
         val projectLibs: String = providers.gradleProperty("project.libs").get()
         val projectPlatforms: String? = providers.gradleProperty("project.platforms").orNull
 
-        rootProject.name = modName.replace(Regex("[^A-Za-z]"), "") + "-" + projectLibs.substringBeforeLast('-')
+        rootProject.name = modName.replace(Regex("\\W"), "") + "-" + projectLibs.substringBeforeLast('-')
         val platformsList = projectPlatforms?.split(",")?.map { it.trim() }?.distinct() ?: emptyList()
         platformsList.forEach { include(it) }
         settings.plugins.apply("org.gradle.toolchains.foojay-resolver-convention")

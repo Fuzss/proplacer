@@ -2,16 +2,16 @@ package fuzs.multiloader
 
 import commonProject
 import externalMods
+import fuzs.multiloader.discord.changelogVersion
+import fuzs.multiloader.discord.verifyChangelogVersion
 import fuzs.multiloader.metadata.DependencyType
 import fuzs.multiloader.metadata.LinkProvider
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import me.modmuss50.mpp.PublishModTask
 import metadata
 import mod
 import net.fabricmc.loom.task.RemapJarTask
+import org.gradle.api.internal.tasks.JvmConstants
 import versionCatalog
-import java.io.FileNotFoundException
 
 plugins {
     id("fuzs.multiloader.conventions-core")
@@ -27,27 +27,17 @@ configurations {
 }
 
 dependencies {
-    compileOnly(project.commonProject)
+    compileOnly(project(project.commonProject.path)) { isTransitive = false }
     add("commonJava", project(mapOf("path" to project.commonProject.path, "configuration" to "commonJava")))
     add("commonResources", project(mapOf("path" to project.commonProject.path, "configuration" to "commonResources")))
 }
 
-tasks.named<JavaCompile>("compileJava") {
+tasks.named<JavaCompile>(JvmConstants.COMPILE_JAVA_TASK_NAME) {
     dependsOn(configurations.named("commonJava"))
     source(configurations.named("commonJava"))
-    // Create an empty refmap if none exists to prevent a warning from the mixin config that the refmap is missing, which also shows up in production.
-    @Suppress("UnstableApiUsage")
-    val refmapFile = layout.buildDirectory.dir("classes/java/main/${loom.mixin.defaultRefmapName.get()}")
-    doLast {
-        val file = refmapFile.get().asFile
-        if (!file.exists() || file.readText().isBlank()) {
-            file.parentFile.mkdirs()
-            file.writeText(Json.encodeToString(JsonObject.serializer(), JsonObject(emptyMap())))
-        }
-    }
 }
 
-tasks.named<ProcessResources>("processResources") {
+tasks.named<ProcessResources>(JvmConstants.PROCESS_RESOURCES_TASK_NAME) {
     dependsOn(configurations.named("commonResources"))
     from(configurations.named("commonResources"))
     dependsOn(project.commonProject.tasks.named<ProcessResources>("processResources"))
@@ -60,7 +50,7 @@ tasks.named<RemapJarTask>("remapJar") {
     archiveClassifier.set("")
 }
 
-tasks.named<Jar>("jar") {
+tasks.named<Jar>(JvmConstants.JAR_TASK_NAME) {
     archiveClassifier.set("dev")
 }
 
@@ -71,23 +61,16 @@ tasks.named<Jar>("sourcesJar") {
     from(configurations.named("commonResources"))
 }
 
-tasks.named<Javadoc>("javadoc") {
+tasks.named<Javadoc>(JvmConstants.JAVADOC_TASK_NAME) {
     dependsOn(configurations.named("commonJava"))
     source(configurations.named("commonJava"))
 }
 
 tasks.withType<PublishModTask>().configureEach {
     notCompatibleWithConfigurationCache("The plugin stores a reference to the Gradle project object.")
-    val versionString = "v${project.mod.version}-${project.versionCatalog.findVersion("minecraft").get()}"
+    val versionString = project.changelogVersion
     doFirst {
-        val file = file("../CHANGELOG.md")
-        if (!file.canRead()) {
-            throw FileNotFoundException("Could not read changelog file")
-        }
-
-        if (!file.readText().contains(versionString)) {
-            throw IllegalStateException("Missing changelog version: $versionString")
-        }
+        verifyChangelogVersion(file("../CHANGELOG.md"), versionString)
     }
 }
 

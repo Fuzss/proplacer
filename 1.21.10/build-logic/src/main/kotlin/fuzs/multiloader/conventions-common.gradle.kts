@@ -1,13 +1,17 @@
 package fuzs.multiloader
 
+import expectPlatform
 import fuzs.multiloader.architectury.ArchitecturyCommonJsonTask
+import fuzs.multiloader.metadata.ModLoaderProvider
 import mod
-import net.fabricmc.loom.task.AbstractRemapJarTask
+import org.gradle.api.internal.tasks.JvmConstants
 import versionCatalog
 
 plugins {
     id("fuzs.multiloader.conventions-core")
 }
+
+project.expectPlatform(ModLoaderProvider.COMMON)
 
 loom {
     accessWidenerPath.set(file("src/main/resources/${mod.id}.accesswidener"))
@@ -20,10 +24,6 @@ dependencies {
     loaderLibraries(versionCatalog.findLibrary("mixinextras.common").get())
 }
 
-tasks.withType<AbstractRemapJarTask>().configureEach {
-    targetNamespace.set("named")
-}
-
 val generateArchitecturyCommonJson = tasks.register<ArchitecturyCommonJsonTask>("generateArchitecturyCommonJson") {
     outputFile.set(layout.buildDirectory.file("generated/resources/architectury.common.json"))
     json {
@@ -31,6 +31,6 @@ val generateArchitecturyCommonJson = tasks.register<ArchitecturyCommonJsonTask>(
     }
 }
 
-tasks.named<ProcessResources>("processResources") {
+tasks.named<ProcessResources>(JvmConstants.PROCESS_RESOURCES_TASK_NAME) {
     dependsOn(generateArchitecturyCommonJson)
 }

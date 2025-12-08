@@ -8,4 +8,4 @@ dependencyResolutionManagement {
 }
 
 val modName: String = providers.gradleProperty("mod.name").get()
-rootProject.name = modName.replace(Regex("[^a-zA-Z]"), "")
+rootProject.name = modName.replace(Regex("\\W"), "")

@@ -146,27 +146,51 @@ abstract class MixinConfigJsonSpec {
     abstract val overwrites: Property<OverwritesSpec>
 
     fun mixin(value: String) {
-        mixins.add(value)
+        mixin(*arrayOf(value))
+    }
+
+    fun mixin(vararg values: String) {
+        values.forEach { mixins.add(it) }
     }
 
     fun accessor(value: String) {
-        mixins.add("accessor.${value}")
+        accessor(*arrayOf(value))
+    }
+
+    fun accessor(vararg values: String) {
+        values.forEach { mixins.add("accessor.$it") }
     }
 
     fun clientMixin(value: String) {
-        client.add("client.${value}")
+        clientMixin(*arrayOf(value))
+    }
+
+    fun clientMixin(vararg values: String) {
+        values.forEach { client.add("client.$it") }
     }
 
     fun clientAccessor(value: String) {
-        client.add("client.accessor.${value}")
+        clientAccessor(*arrayOf(value))
+    }
+
+    fun clientAccessor(vararg values: String) {
+        values.forEach { client.add("client.accessor.$it") }
     }
 
     fun serverMixin(value: String) {
-        server.add("server.${value}")
+        serverMixin(*arrayOf(value))
+    }
+
+    fun serverMixin(vararg values: String) {
+        values.forEach { server.add("server.$it") }
     }
 
     fun serverAccessor(value: String) {
-        server.add("server.accessor.${value}")
+        serverAccessor(*arrayOf(value))
+    }
+
+    fun serverAccessor(vararg values: String) {
+        values.forEach { server.add("server.accessor.$it") }
     }
 
     fun injectors(action: Action<InjectorsSpec>) {

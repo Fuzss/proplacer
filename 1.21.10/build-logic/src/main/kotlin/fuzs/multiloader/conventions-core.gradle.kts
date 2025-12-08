@@ -1,5 +1,6 @@
 package fuzs.multiloader
 
+import dontRemap
 import fuzs.multiloader.extension.MultiLoaderExtension
 import fuzs.multiloader.metadata.LinkProvider
 import fuzs.multiloader.mixin.MixinConfigJsonTask
@@ -7,7 +8,7 @@ import fuzs.multiloader.task.IncrementBuildNumber
 import metadata
 import mod
 import net.fabricmc.loom.LoomGradlePlugin
-import net.fabricmc.loom.task.RemapJarTask
+import org.gradle.api.internal.tasks.JvmConstants
 import projectPlatform
 import versionCatalog
 import java.time.ZonedDateTime
@@ -256,11 +257,6 @@ idea {
 
 loom {
     silentMojangMappingsLicense()
-    @Suppress("UnstableApiUsage")
-    mixin {
-        useLegacyMixinAp = true
-        defaultRefmapName = "${mod.id}.refmap.json"
-    }
     decompilers {
         get("vineflower").apply {
             // Shows the method name of lambdas in a comment.
@@ -388,8 +384,6 @@ val generateMixinConfig = tasks.register<MixinConfigJsonTask>("generateMixinConf
         minVersion.set("0.8")
         required.set(true)
         compatibilityLevel.set("JAVA_${versionCatalog.findVersion("java").get().requiredVersion}")
-        @Suppress("UnstableApiUsage")
-        refmap.set(loom.mixin.defaultRefmapName)
         injectors {
             defaultRequire.set(1)
         }
@@ -402,7 +396,7 @@ val generateMixinConfig = tasks.register<MixinConfigJsonTask>("generateMixinConf
     }
 }
 
-tasks.named<ProcessResources>("processResources") {
+tasks.named<ProcessResources>(JvmConstants.PROCESS_RESOURCES_TASK_NAME) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn(generateMixinConfig)
     from(project.layout.buildDirectory.dir("generated/resources"))
@@ -415,11 +409,11 @@ val copyDevelopmentJar = tasks.register<Copy>("copyDevelopmentJar") {
     val incrementBuildNumber = rootProject.tasks.named<IncrementBuildNumber>("incrementBuildNumber")
     dependsOn(incrementBuildNumber)
 
-    val remapJar = tasks.named<RemapJarTask>("remapJar")
-    dependsOn(remapJar)
+    val jarTask = tasks.named<AbstractArchiveTask>(if (this.project.dontRemap) JvmConstants.JAR_TASK_NAME else "remapJar")
+    dependsOn(jarTask)
 
     if (buildOutput.isPresent) {
-        from(remapJar.flatMap { it.archiveFile })
+        from(jarTask.flatMap { it.archiveFile })
         into(buildOutput.get())
 
         // This runs at configuration time before the properties file is updated.
