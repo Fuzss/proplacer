@@ -2,7 +2,6 @@ package fuzs.multiloader
 
 import commonProject
 import expectPlatform
-import fuzs.multiloader.architectury.ArchitecturyCommonJsonTask
 import fuzs.multiloader.metadata.LinkProvider
 import fuzs.multiloader.metadata.ModLoaderProvider
 import fuzs.multiloader.neoforge.setupModsTomlTask
@@ -96,18 +95,6 @@ dependencies {
 
 tasks.named<RemapJarTask>("remapJar") {
     atAccessWideners.add(project.commonProject.loom.accessWidenerPath.map { it.asFile.name })
-    // We need to have an access widener in the NeoForge jar for transitive entries to apply in an Architectury Loom setup.
-    // Since we compile on the native loaders, common access widener changes will otherwise not carry over and lead to errors.
-    from(project.commonProject.loom.accessWidenerPath) {
-        into("/META-INF")
-    }
-}
-
-val generateArchitecturyCommonJson = tasks.register<ArchitecturyCommonJsonTask>("generateArchitecturyCommonJson") {
-    outputFile.set(layout.buildDirectory.file("generated/resources/architectury.common.json"))
-    json {
-        accessWidener.set(loom.accessWidenerPath.map { "META-INF/${it.asFile.name}" })
-    }
 }
 
 val generateModsToml = tasks.register<NeoForgeModsTomlTask>("generateModsToml") {
@@ -115,7 +102,7 @@ val generateModsToml = tasks.register<NeoForgeModsTomlTask>("generateModsToml") 
 }
 
 tasks.named<ProcessResources>(JvmConstants.PROCESS_RESOURCES_TASK_NAME) {
-    dependsOn(generateArchitecturyCommonJson, generateModsToml)
+    dependsOn(generateModsToml)
 }
 
 val refreshUpdateJson = tasks.register("refreshUpdateJson") {
