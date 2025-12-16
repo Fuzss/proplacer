@@ -1,3 +1,3 @@
 plugins {
-    id("fuzs.multiloader.conventions-root")
+    id("fuzs.multiloader.multiloader-convention-plugins-root")
 }
