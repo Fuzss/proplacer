@@ -1,0 +1,14 @@
+[
+  {
+    "from": {
+      "owner": "fuzs/proplacer/ProPlacer",
+      "name": "IS_AQUATIC",
+      "desc": "Lnet/minecraft/tags/TagKey;"
+    },
+    "to": {
+      "owner": "net/neoforged/neoforge/common/Tags$Biomes",
+      "name": "IS_AQUATIC",
+      "desc": "Lnet/minecraft/tags/TagKey;"
+    }
+  }
+]

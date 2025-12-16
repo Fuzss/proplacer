@@ -1,0 +1,9 @@
+{
+  "fuzs/proplacer/ProPlacer": {
+    "IS_AQUATIC": {
+      "owner": "net/neoforged/neoforge/common/Tags$Biomes",
+      "name": "IS_AQUATIC_DISABLED",
+      "desc": "Lnet/minecraft/tags/TagKey;"
+    }
+  }
+}

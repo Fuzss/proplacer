@@ -1,0 +1,14 @@
+{
+  "mappings": [
+    {
+      "from": {
+        "owner": "fuzs/proplacer/ProPlacer",
+        "name": "IS_AQUATIC"
+      },
+      "to": {
+        "owner": "net/fabricmc/fabric/api/tag/convention/v2/ConventionalBiomeTags",
+        "name": "IS_AQUATIC"
+      }
+    }
+  ]
+}
