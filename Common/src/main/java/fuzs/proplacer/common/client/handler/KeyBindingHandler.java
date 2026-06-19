@@ -27,11 +27,9 @@ public class KeyBindingHandler {
         context.registerKeyMapping(KeyBindingHandler.KEY_TOGGLE_FAST_PLACEMENT,
                 KeyActivationHandler.forGame(minecraft -> {
                     isFastPlacementActive = !isFastPlacementActive;
-                    minecraft.gui.setOverlayMessage(Component.translatable(KEY_FAST_PLACEMENT_MESSAGE,
-                            isFastPlacementActive ? COMPONENT_ON : COMPONENT_OFF
-                    ), false);
-                })
-        );
+                    minecraft.gui.hud.setOverlayMessage(Component.translatable(KEY_FAST_PLACEMENT_MESSAGE,
+                            isFastPlacementActive ? COMPONENT_ON : COMPONENT_OFF), false);
+                }));
     }
 
     public static void onLoadComplete() {
