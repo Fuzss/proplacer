@@ -6,11 +6,17 @@
     "26.1.x": "maintained",
     "26.2.x": "primary"
   },
-  "properties": {
-    "distributions.curseforge.id": "368320",
-    "distributions.curseforge.slug": "pro-placer",
-    "distributions.github.slug": "pro-placer",
-    "distributions.modrinth.id": "LhK0LkWd",
-    "distributions.modrinth.slug": "pro-placer"
+  "distributions": {
+    "curseforge": {
+      "id": "368320",
+      "slug": "pro-placer"
+    },
+    "github": {
+      "slug": "pro-placer"
+    },
+    "modrinth": {
+      "id": "LhK0LkWd",
+      "slug": "pro-placer"
+    }
   }
 }
